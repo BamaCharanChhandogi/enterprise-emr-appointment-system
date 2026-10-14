@@ -1,0 +1,46 @@
+# Docker Compose for Enterprise EMR System
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: emr-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: emr_appointment_system
+    volumes:
+      - emr-mongo-data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: emr-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/emr_appointment_system
+      - JWT_ACCESS_SECRET=production_grade_super_secret_access_jwt_key_2026
+      - JWT_REFRESH_SECRET=production_grade_super_secret_refresh_jwt_key_2026
+      - CLIENT_URL=http://localhost:5173
+    depends_on:
+      - mongodb
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: emr-frontend
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  emr-mongo-data:
