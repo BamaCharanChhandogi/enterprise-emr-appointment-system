@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { getSocket } from '../services/socket';
 import OpdQueuePanel from '../components/OpdQueuePanel';
+import DoctorClinic from './DoctorClinic';
 import { Bell } from 'lucide-react';
 
 const Scheduler = () => {
@@ -11,7 +12,13 @@ const Scheduler = () => {
   const navigate = useNavigate();
 
   const isDoctor = user?.role === 'DOCTOR';
-  const [showOpdQueue, setShowOpdQueue] = useState(isDoctor);
+
+  // If a Doctor accesses Scheduler, render their unified Clinic workspace
+  if (isDoctor) {
+    return <DoctorClinic />;
+  }
+
+  const [showOpdQueue, setShowOpdQueue] = useState(false);
 
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState(isDoctor ? user?.id : '');

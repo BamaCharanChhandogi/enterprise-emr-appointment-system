@@ -4,9 +4,16 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { getSocket } from '../services/socket';
 import OpdQueuePanel from '../components/OpdQueuePanel';
+import DoctorClinic from './DoctorClinic';
 
 const Dashboard = () => {
   const { user } = useAuth();
+
+  // If Doctor logs in, strictly render their focused unified clinical workspace
+  if (user?.role === 'DOCTOR') {
+    return <DoctorClinic />;
+  }
+
   const [stats, setStats] = useState({
     totalToday: 0,
     scheduled: 0,
@@ -97,22 +104,22 @@ const Dashboard = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e2e8f0] mb-5">
         <div>
           <h1 className="text-[17px] font-bold text-[#0f172a] tracking-tight">
-            Clinical Overview
+            {user?.role === 'RECEPTIONIST' ? 'Front Desk & Lobby Operations' : 'Hospital Executive Overview'}
           </h1>
           <p className="text-[12px] text-[#64748b] mt-0.5 font-mono">
-            OPERATOR: {user?.name?.toUpperCase()} • ROLE: {user?.role}
+            OPERATOR: {user?.name?.toUpperCase()} • {user?.role === 'RECEPTIONIST' ? 'ADMISSIONS & LOBBY' : 'SYSTEM GOVERNANCE'}
           </p>
         </div>
 
         <div className="flex items-center space-x-2">
-          <Link to="/scheduler" className="btn-secondary">
-            Scheduler Matrix
-          </Link>
-          {(user?.role === 'SUPER_ADMIN' || user?.role === 'RECEPTIONIST') && (
-            <Link to="/book" className="btn-primary">
-              Book Appointment
+          {user?.role === 'SUPER_ADMIN' && (
+            <Link to="/scheduler" className="btn-secondary">
+              Scheduler Matrix
             </Link>
           )}
+          <Link to="/book" className="btn-primary">
+            Book Appointment
+          </Link>
         </div>
       </div>
 

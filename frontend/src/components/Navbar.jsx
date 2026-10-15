@@ -38,29 +38,51 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* 2. Middle: Floating Pill Container with clean feature navigation */}
+          {/* 2. Middle: Clean Role-Tailored Navigation Pills */}
           {user && (
             <nav className="hidden lg:flex items-center bg-[#f8fafc] border border-[#e2e8f0] p-1 rounded-xl shadow-2xs space-x-1">
-              <NavLink to="/dashboard" className={navItemClass}>
-                Dashboard
-              </NavLink>
-
-              <NavLink to="/scheduler" className={navItemClass}>
-                Scheduler
-              </NavLink>
-
-              {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && (
-                <NavLink to="/book" className={navItemClass}>
-                  New Appointment
-                </NavLink>
+              {/* DOCTOR: Focused clinical tabs only */}
+              {user.role === 'DOCTOR' && (
+                <>
+                  <NavLink to="/dashboard" className={navItemClass}>
+                    My Clinic & OPD Queue
+                  </NavLink>
+                  <NavLink to="/appointments" className={navItemClass}>
+                    Patient Records
+                  </NavLink>
+                </>
               )}
 
-              <NavLink to="/appointments" className={navItemClass}>
-                Appointments
-              </NavLink>
+              {/* RECEPTIONIST: Front desk operations only */}
+              {user.role === 'RECEPTIONIST' && (
+                <>
+                  <NavLink to="/dashboard" className={navItemClass}>
+                    Front Desk & Lobby
+                  </NavLink>
+                  <NavLink to="/book" className={navItemClass}>
+                    Book Appointment
+                  </NavLink>
+                  <NavLink to="/appointments" className={navItemClass}>
+                    All Appointments
+                  </NavLink>
+                </>
+              )}
 
+              {/* SUPER ADMIN: Executive hospital administration */}
               {user.role === 'SUPER_ADMIN' && (
                 <>
+                  <NavLink to="/dashboard" className={navItemClass}>
+                    Hospital Overview
+                  </NavLink>
+                  <NavLink to="/scheduler" className={navItemClass}>
+                    Scheduler Matrix
+                  </NavLink>
+                  <NavLink to="/book" className={navItemClass}>
+                    Book Appointment
+                  </NavLink>
+                  <NavLink to="/appointments" className={navItemClass}>
+                    Appointments Directory
+                  </NavLink>
                   <NavLink to="/admin/staff" className={navItemClass}>
                     Doctor Shifts
                   </NavLink>

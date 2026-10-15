@@ -174,9 +174,13 @@ const AppointmentList = () => {
       
       {/* Header */}
       <div className="pb-4 border-b border-[#e2e8f0] mb-5">
-        <h1 className="text-[17px] font-bold text-[#0f172a] tracking-tight">Appointments Directory</h1>
+        <h1 className="text-[17px] font-bold text-[#0f172a] tracking-tight">
+          {user.role === 'DOCTOR' ? 'Patient Clinical Records & History' : 'Appointments Directory'}
+        </h1>
         <p className="text-[12px] text-[#64748b] mt-0.5">
-          {user.role === 'DOCTOR' ? 'My Assigned Consultations' : 'All Hospital Patient Appointments'}
+          {user.role === 'DOCTOR'
+            ? `Consultation archive, diagnoses, and prescription records for ${user.name}`
+            : 'Central patient appointment registry and front-desk lookup'}
         </p>
       </div>
 
