@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Activity, LogOut } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -12,89 +11,103 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  const navLinkClass = ({ isActive }) =>
-    `whitespace-nowrap px-3 py-1.5 rounded-[5px] text-[13px] font-medium transition-all ${
+  const navItemClass = ({ isActive }) =>
+    `px-3.5 py-1.5 text-[13px] font-medium transition-all whitespace-nowrap rounded-[5px] ${
       isActive
-        ? 'bg-[#2555ff] text-white shadow-sm'
-        : 'text-[#64748b] hover:text-[#0f172a] hover:bg-[#f1f5f9]'
+        ? 'bg-[#2555ff] text-white shadow-sm font-semibold'
+        : 'text-[#475569] hover:text-[#0f172a] hover:bg-slate-100/70'
     }`;
 
   return (
-    <header className="bg-white border-b border-[#e2e8f0] sticky top-0 z-50">
+    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#e2e8f0]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex h-14 items-center justify-between gap-4">
-          {/* Left: Brand Identity */}
+        <div className="flex h-16 items-center justify-between">
+          
+          {/* 1. Left: Brand Logo & Title */}
           <Link to="/dashboard" className="flex items-center space-x-2.5 shrink-0">
-            <div className="w-7 h-7 rounded-[5px] bg-[#2555ff] flex items-center justify-center text-white shrink-0">
-              <Activity className="w-4 h-4 stroke-[2.5]" />
+            <div className="w-8 h-8 rounded-[5px] bg-[#2555ff] flex items-center justify-center text-white shadow-sm font-bold text-base">
+              +
             </div>
             <div className="leading-tight">
-              <span className="text-[14px] font-bold text-[#0f172a] tracking-tight">
+              <span className="text-[15px] font-bold text-[#0f172a] tracking-tight">
                 Nexus<span className="text-[#2555ff]">EMR</span>
               </span>
-              <span className="text-[9px] block text-[#64748b] font-medium tracking-wider uppercase">
-                Clinical Ops
+              <span className="text-[10px] block text-[#64748b] font-medium tracking-wider uppercase">
+                Hospital System
               </span>
             </div>
           </Link>
 
-          {/* Center: Clean Text Navigation Bar */}
+          {/* 2. Middle: Floating Pill Container with clean feature navigation */}
           {user && (
-            <nav className="hidden lg:flex items-center space-x-1">
-              <NavLink to="/dashboard" className={navLinkClass}>
+            <nav className="hidden lg:flex items-center bg-[#f8fafc] border border-[#e2e8f0] p-1 rounded-[5px] shadow-sm space-x-1">
+              <NavLink to="/dashboard" className={navItemClass}>
                 Dashboard
               </NavLink>
 
-              <NavLink to="/scheduler" className={navLinkClass}>
+              <NavLink to="/scheduler" className={navItemClass}>
                 Scheduler
               </NavLink>
 
               {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && (
-                <NavLink to="/book" className={navLinkClass}>
-                  Book Slot
+                <NavLink to="/book" className={navItemClass}>
+                  New Appointment
                 </NavLink>
               )}
 
-              <NavLink to="/appointments" className={navLinkClass}>
+              <NavLink to="/appointments" className={navItemClass}>
                 Appointments
               </NavLink>
 
               {user.role === 'SUPER_ADMIN' && (
                 <>
-                  <NavLink to="/admin/staff" className={navLinkClass}>
-                    Staff & Shifts
+                  <NavLink to="/admin/staff" className={navItemClass}>
+                    Doctor Shifts
                   </NavLink>
-                  <NavLink to="/admin/audit-logs" className={navLinkClass}>
-                    Audit Trail
+                  <NavLink to="/admin/audit-logs" className={navItemClass}>
+                    Audit Logs
                   </NavLink>
                 </>
               )}
             </nav>
           )}
 
-          {/* Right: User Profile & Compact Logout */}
-          {user && (
-            <div className="flex items-center space-x-3 shrink-0">
-              <div className="hidden sm:flex flex-col items-end leading-tight">
-                <div className="flex items-center space-x-1.5">
-                  <span className="text-[12px] font-semibold text-[#0f172a]">{user.name}</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[5px] bg-[#2555ff]/10 text-[#2555ff] border border-[#2555ff]/20">
-                    {user.role.replace('_', ' ')}
-                  </span>
+          {/* 3. Right: User Profile Capsule & Logout */}
+          <div className="flex items-center space-x-3 shrink-0">
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <div className="text-right hidden sm:block leading-tight">
+                  <div className="text-[13px] font-semibold text-[#0f172a]">
+                    {user.name}
+                  </div>
+                  <div className="text-[11px] text-[#64748b] font-medium">
+                    {user.role === 'SUPER_ADMIN' && 'Super Administrator'}
+                    {user.role === 'RECEPTIONIST' && 'Front Desk Staff'}
+                    {user.role === 'DOCTOR' && `${user.department || 'Physician'}`}
+                  </div>
                 </div>
-                <span className="text-[11px] text-[#64748b] font-mono">{user.email}</span>
-              </div>
 
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center space-x-1 px-2.5 py-1 text-[11px] font-medium text-[#64748b] hover:text-rose-600 hover:bg-rose-50 rounded-[5px] border border-[#e2e8f0] hover:border-rose-200 transition"
-                title="Logout"
+                <div className="w-8 h-8 rounded-[5px] bg-[#0f172a] text-white flex items-center justify-center font-bold text-xs uppercase">
+                  {user.name?.charAt(0)}
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1.5 text-[12px] font-medium text-[#475569] hover:text-[#b91c1c] hover:bg-rose-50 border border-[#e2e8f0] rounded-[5px] transition"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 py-1.5 bg-[#2555ff] hover:bg-[#1b44db] text-white text-[13px] font-medium rounded-[5px] transition shadow-sm"
               >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Logout</span>
-              </button>
-            </div>
-          )}
+                Sign In
+              </Link>
+            )}
+          </div>
+
         </div>
       </div>
     </header>
