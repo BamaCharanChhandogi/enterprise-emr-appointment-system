@@ -226,3 +226,97 @@ This launches:
 
 ## 📄 Engineering Decisions Document
 Detailed explanations answering all mandatory architectural evaluation criteria can be found in [ENGINEERING_DECISIONS.md](file:///d:/Programming/TEMP/emr-appointment-system/ENGINEERING_DECISIONS.md).
+
+---
+
+## 🗄️ Database Design & Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    USER ||--o| DOCTOR_SCHEDULE : "configures shift"
+    USER ||--o{ APPOINTMENT : "attending physician"
+    PATIENT ||--o{ APPOINTMENT : "books visit"
+    USER ||--o{ AUDIT_LOG : "triggers event"
+
+    USER {
+        ObjectId _id PK
+        string name
+        string email UK
+        string password
+        enum role "SUPER_ADMIN | RECEPTIONIST | DOCTOR"
+        string department
+        string phone
+        string[] refreshTokens
+    }
+
+    DOCTOR_SCHEDULE {
+        ObjectId _id PK
+        ObjectId doctor FK
+        array weeklySchedule "day, sessions, breaks, slotDuration"
+    }
+
+    PATIENT {
+        ObjectId _id PK
+        string patientId UK "MRN Format"
+        string name
+        string phone
+        number age
+        string gender
+        string medicalHistory
+    }
+
+    APPOINTMENT {
+        ObjectId _id PK
+        string appointmentNumber UK
+        ObjectId patient FK
+        ObjectId doctor FK
+        string department
+        string date "ISO YYYY-MM-DD"
+        string slotStartTime "HH:mm"
+        string slotEndTime "HH:mm"
+        string purpose
+        string notes
+        string consultationNotes
+        enum status "Scheduled | Arrived | Completed | Cancelled"
+        string cancellationReason
+    }
+
+    AUDIT_LOG {
+        ObjectId _id PK
+        ObjectId user FK
+        string userName
+        string userRole
+        string action
+        string entity
+        string entityId
+        object details
+        Date timestamp
+    }
+```
+
+---
+
+## 📝 Assumptions Made
+
+1. **Date & Timezone Format**: Dates are stored as strict ISO strings (`YYYY-MM-DD`) and slot times in 24-hour military notation (`HH:mm`, e.g., `09:00`, `14:30`) to avoid UTC/local timezone drift across different hospital client terminals.
+2. **Weekly Shift Model**: Doctors follow a standardized weekly template schedule (Monday through Sunday) with dynamic slot generation on demand rather than storing millions of static empty slots in the database.
+3. **Cancellation Slot Release**: Cancelled appointments release their reserved slot immediately, allowing other walk-ins or scheduled patients to book that slot.
+4. **Physician Cabin Privacy**: Doctors are scoped strictly to their assigned patient records and consultation forms. Receptionists have access to token slips and lobby intake but are restricted from medical consultation assessments.
+
+---
+
+## ⚠️ Known Limitations
+
+1. **Recurring Holiday Calendar**: Currently, doctor availability is governed by weekly active days and break hours. Special one-off national holidays require setting the day inactive in the schedule matrix.
+2. **Multi-Doctor Consultations**: Each appointment slot is currently mapped to one primary attending physician. Co-consulting multidisciplinary panels are not yet supported in this version.
+3. **Single Timezone per Hospital Node**: Assumes the hospital campus operates within a single local timezone (standard hospital facility operational model).
+
+---
+
+## 🚀 Future Improvements
+
+1. **Redis Distributed Caching & Redlock**: Integrate Redis Cluster with distributed mutex locks to handle sub-millisecond race conditions across multi-node server clusters.
+2. **SMS & WhatsApp OPD Token Gateway**: Integrate Twilio or WhatsApp Cloud API for automated queue ticket delivery directly to patient smartphones upon reception check-in.
+3. **Telehealth Video Cabin Integration**: WebRTC peer-to-peer cabin video consulting for remote doctor-patient appointments.
+4. **HL7 / FHIR Clinical Interoperability**: Export patient records and prescriptions to FHIR R4 standard JSON for hospital EHR cross-system synchronization.
+
