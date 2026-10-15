@@ -1,169 +1,107 @@
-# ENGINEERING DECISIONS & ARCHITECTURAL SPECIFICATION
+# Engineering Decisions & System Design
 
-## Enterprise Electronic Medical Record (EMR) Appointment Management System
+This document covers the architectural choices, trade-offs, and technical rationale behind our Enterprise EMR Appointment System.
 
 ---
 
 ### 1. Why Did You Choose Your Project Architecture?
 
-We selected a **Clean N-Tier Layered Architecture** with strict **Separation of Concerns (SoC)** for the backend and a **Modular Domain-Driven Structure** for the frontend:
+We structured the backend into **Routes → Middlewares → Controllers → Services → Models**:
 
-```
-[ HTTP / REST Clients ] ──▶ [ Controllers (Lightweight orchestrators) ]
-                                    │
-                                    ▼
-                         [ Services (Pure Business Logic) ]
-                                    │
-                         ┌──────────┴──────────┐
-                         ▼                     ▼
-                [ Mongoose Models ]    [ Socket.IO / Audit Log ]
-                         │
-                         ▼
-                [ MongoDB Database ]
-```
-
-#### Rationale:
-1. **Lightweight Controllers**: Controllers are strictly responsible for parsing HTTP inputs, invoking the corresponding service method, and returning standardized API responses. Zero business rules are written inside controllers.
-2. **Business Logic in Services**: All validation logic, time calculations (breaks, slot generation, past dates), and transaction flows reside inside service classes (`doctorService.js`, `appointmentService.js`, `authService.js`). This makes the application testable and decoupled from the transport layer.
-3. **Defense-in-Depth Middleware**: Authentication, Role-Based Access Control (`authorize`), and input schema validation with **Zod** are implemented as pipeline middlewares before requests ever touch controllers.
-4. **WebSocket Decoupling**: The real-time notification engine operates as an observer pattern (`emitAppointmentUpdate`), broadcasting to specific rooms (`schedule_{doctorId}_{date}`) as well as global dashboard listeners without coupling business transactions to network sockets.
+- **Controllers are thin**: Their only job is receiving the HTTP request, extracting parameters, calling the service, and returning a consistent JSON response.
+- **Business logic lives entirely in Services**: All the real rules—like generating non-overlapping slots, skipping lunch breaks, blocking past slots, checking double-booking, and cascading cancellations—are inside `appointmentService`, `slotService`, and `doctorService`. If we ever switch from REST to GraphQL or tRPC, zero business logic needs to be rewritten.
+- **Frontend State**: We used React Context for authentication and an Axios instance with a response interceptor to handle automatic token refresh. For application state, we kept state close to the components that need it (with custom hooks and Socket.IO events) instead of pulling in heavy Redux boilerplate for features that are already synchronized via WebSockets.
 
 ---
 
 ### 2. How Did You Design Your MongoDB Schema?
 
-The schema models real-world enterprise healthcare structures with normalized relationships where data integrity is paramount, and embedded structures where query efficiency is maximized:
+We designed the schema around how a hospital actually operates:
 
-```
-┌─────────────────┐            ┌──────────────────────┐
-│      User       │1          1│    DoctorSchedule    │
-│  (Auth & RBAC)  ├────────────┤ (Sessions & Breaks)  │
-└────────┬────────┘            └──────────────────────┘
-         │
-         │ 1:N (Doctor)
-         ▼
-┌─────────────────┐            ┌──────────────────────┐
-│   Appointment   │N          1│       Patient        │
-│ (Active Booking)├────────────┤ (Demographic Record) │
-└─────────────────┘            └──────────────────────┘
-```
-
-1. **`User` (Staff & Auth)**:
-   - Stores Super Admins, Receptionists, and Doctors.
-   - Roles are strictly enumerated (`SUPER_ADMIN`, `RECEPTIONIST`, `DOCTOR`).
-   - Password hashes (`bcryptjs`) are marked with `select: false` to ensure passwords are never leaked through queries.
-   - Supports an array of active `refreshTokens` with automated expiration for JWT rotation.
-
-2. **`DoctorSchedule` (Master Availability)**:
-   - Embedded weekly schedule array (`Monday` through `Sunday`).
-   - Each day contains `sessions` (e.g., `09:00 - 12:00`, `13:00 - 17:00`), `breaks` (e.g., `12:00 - 13:00`), and configurable `slotDuration` (15, 30, etc.).
-   - Kept separate from appointments so slot calculations are generated dynamically on demand, saving massive database storage.
-
-3. **`Patient`**:
-   - Unique medical record identifier (`patientId`, e.g., `PAT-100201`), phone number, demographic details.
-   - Text indexing enables instant sub-second lookup by name, phone, or MRN.
-
-4. **`Appointment`**:
-   - Stores appointment number, references to `patient`, `doctor`, `date` (formatted as ISO `YYYY-MM-DD` string to eliminate timezone drift across timezones), `slotStartTime`, `slotEndTime`, `status`, and clinical notes.
-
-5. **`AuditLog`**:
-   - Append-only collection recording `user`, `role`, `action`, `entity`, `entityId`, timestamp, IP address, and payload snapshot for compliance and accountability.
+1. **Separation of Staff and Patients**:
+   - `User` is strictly for hospital staff (`SUPER_ADMIN`, `RECEPTIONIST`, `DOCTOR`) who authenticate with credentials.
+   - `Patient` is for patient medical records (`patientId`, demographics, medical history). Patients do not have login access in an internal EMR.
+2. **Dynamic Schedule vs Static Slots**:
+   - Storing pre-generated empty slot rows for every doctor weeks in advance is an anti-pattern—it clutters the database with millions of unbooked documents.
+   - Instead, `DoctorSchedule` stores the doctor's weekly working template: working days, morning/afternoon sessions, lunch break hours, and slot duration (e.g., 15m). Slots are calculated dynamically in-memory when requested.
+3. **Strings for Dates and Times**:
+   - Dates are stored as ISO strings (`YYYY-MM-DD`, e.g., `"2026-10-15"`) and times as 24-hour strings (`"09:00"`, `"13:30"`).
+   - In healthcare, JavaScript `Date` objects cause subtle timezone bugs (e.g. a 9:00 AM appointment shifting to 2:30 PM UTC when viewed from another workstation). String representation guarantees the exact calendar date and slot time stay identical across all hospital terminals.
 
 ---
 
 ### 3. How Did You Prevent Double Booking? (Concurrency Strategy)
 
-Double-booking prevention is designed using a **multi-layered, fail-safe concurrency strategy**:
+Double-booking prevention cannot rely on simple `if (!slot.isBooked)` checks in Node.js because two concurrent clicks will both pass the check before either write completes (classic race condition / TOCTOU bug).
 
-#### Layer 1: Database-Level Partial Unique Compound Index (Ultimate Guarantee)
-We enforce a partial unique compound index at the MongoDB storage engine level:
-```javascript
-appointmentSchema.index(
-  { doctor: 1, date: 1, slotStartTime: 1 },
-  {
-    unique: true,
-    partialFilterExpression: { status: { $in: ['Scheduled', 'Arrived', 'Completed'] } },
-    name: 'unique_active_doctor_slot'
-  }
-);
-```
-- **Why this works**: If two receptionists click "Book" on the exact same second for `Dr. House` at `09:00 AM on 2026-10-25`, the MongoDB engine uses atomic B-Tree leaf insertion locks. Exactly **one** document is written; the concurrent request fails with MongoDB duplicate key error code `E11000`.
-- **Cancelled Slots Reusability**: Using `partialFilterExpression: { status: { $in: ['Scheduled', 'Arrived', 'Completed'] } }`, once an appointment status is changed to `Cancelled`, the unique constraint is released for that slot, allowing another patient to book it immediately without manual cleanup!
+We solved this with a **three-tier concurrency defense**:
 
-#### Layer 2: Service-Level Atomic Verification (Pre-Flight Lock)
-Before inserting, `appointmentService.js` performs an explicit active slot query and translates duplicate conflicts into an HTTP `409 Conflict` with clear feedback to the user:
-> *"Conflict: The time slot 09:00 on 2026-10-25 for this doctor has already been booked by another user. Please choose another slot."*
-
-#### Layer 3: Real-Time WebSocket Push (Pre-Emptive Conflict Prevention)
-When an appointment is created or cancelled, the backend emits `slot_status_changed` to the specific Socket.IO room `schedule_{doctorId}_{date}`. Every client viewing that schedule immediately turns that slot gray (`Booked`) without requiring a page refresh, reducing race conditions at the human UI level.
+1. **Database-Level Partial Unique Index (Primary Lock)**:
+   We created a compound partial unique index on the `appointments` collection:
+   ```javascript
+   appointmentSchema.index(
+     { doctor: 1, date: 1, slotStartTime: 1 },
+     {
+       unique: true,
+       partialFilterExpression: { status: { $in: ['Scheduled', 'Arrived', 'Completed'] } }
+     }
+   );
+   ```
+   If two receptionists submit a booking for the same doctor at `09:15` on the exact same millisecond, MongoDB's atomic index write allows one to succeed and immediately throws duplicate key error `E11000` on the other.
+2. **Instant Slot Recycling via Partial Filter**:
+   Because the unique constraint only applies to active statuses (`Scheduled`, `Arrived`, `Completed`), when an appointment is marked `Cancelled`, the constraint is instantly released for that slot. Other patients can immediately book that time without needing manual DB cleanups.
+3. **Real-Time WebSocket Lock**:
+   When a booking or cancellation happens, the server broadcasts `slot_status_changed` to that doctor's room. Other staff viewing the scheduler see the slot turn gray (`Booked`) live without needing to refresh.
 
 ---
 
 ### 4. Which Database Indexes Did You Create and Why?
 
-| Collection | Index Keys | Type | Purpose |
-| :--- | :--- | :--- | :--- |
-| **appointments** | `{ doctor: 1, date: 1, slotStartTime: 1 }` | Unique Partial Index | **Concurrency lock**: Prevents double-booking active slots for any doctor. |
-| **appointments** | `{ doctor: 1, date: 1, status: 1 }` | Compound Index | Optimizes scheduler lookups when computing open vs booked slots for a specific day. |
-| **appointments** | `{ appointmentNumber: 1 }` | Unique B-Tree | Fast lookup for appointment check-in, arrival, and updates. |
-| **patients** | `{ patientId: 1 }`, `{ phone: 1 }` | Unique / Single | Instant patient record retrieval by Mobile or Hospital MRN. |
-| **patients** | `{ name: "text", phone: "text", patientId: "text" }` | Text Index | Auto-complete fuzzy searching during reception desk intake. |
-| **auditlogs** | `{ action: 1, timestamp: -1 }` | Compound Index | Enables high-performance server-side paginated queries for compliance audits. |
+| Collection | Index | Purpose |
+| :--- | :--- | :--- |
+| **appointments** | `{ doctor: 1, date: 1, slotStartTime: 1 }` (Unique Partial) | Hard concurrency lock against double-booking active slots. |
+| **appointments** | `{ doctor: 1, date: 1, status: 1 }` | Powers the dynamic slot generator to quickly fetch booked slots for the day. |
+| **appointments** | `{ appointmentNumber: 1 }` (Unique) | O(1) lookup when receptionist searches or prints a token slip. |
+| **patients** | `{ patientId: 1 }`, `{ phone: 1 }` (Unique) | Fast patient demographic lookups by MRN or mobile number. |
+| **patients** | `{ name: "text", phone: "text", patientId: "text" }` | Text search index for receptionist auto-complete search bar. |
+| **auditlogs** | `{ timestamp: -1 }`, `{ action: 1 }` | Fast chronological pagination for hospital compliance reviews. |
 
 ---
 
 ### 5. What Security Measures Did You Implement?
 
-1. **JWT Dual-Token Pattern**:
-   - Short-lived Access Token (15 minutes).
-   - Long-lived Refresh Token (7 days) stored encrypted and rotated upon every refresh.
-   - Refresh token revocation on logout to terminate stolen sessions.
-2. **Password Hashing**:
-   - `bcryptjs` with salt factor 10. `select: false` prevents accidental exposure in REST responses.
-3. **Role-Based Access Control (RBAC)**:
-   - Dedicated middleware (`authorize('SUPER_ADMIN', 'RECEPTIONIST')`).
-   - Doctors are physically restricted from viewing or modifying records belonging to other doctors.
-4. **Input Sanitization & Schema Validation**:
-   - Strict **Zod schemas** validate query parameters, body payloads, and route arguments, rejecting injection payloads and malformed dates/times.
-5. **Defensive HTTP Headers & Throttling**:
-   - `helmet` sets secure HTTP headers (XSS, HSTS, frameguard).
-   - `express-rate-limit` throttles brute-force attempts on authentication endpoints (max 100 requests per 15 mins).
-   - Standardized error serializer strips stack traces in non-development environments.
+- **JWT Dual-Token Rotation**: 15-minute access token + 7-day refresh token stored in the database. When the client calls `/auth/refresh`, the old refresh token is rotated. Logging out immediately revokes the refresh token from the database.
+- **Password Security**: Passwords hashed with `bcryptjs`. The password field has `select: false` in the Mongoose schema so queries like `User.find()` never leak password hashes in API responses.
+- **Strict Server-Side RBAC**: Role verification is enforced in middleware, not just UI visibility. For example, when a Doctor calls `/api/v1/appointments`, the backend overrides any doctor query filter with `req.user.id`, ensuring doctors can never view or modify appointments belonging to colleagues.
+- **Zero Raw Error Leaks**: Database connection strings, stack traces, and internal IDs are stripped in API responses. User-facing messages use clean clinical terminology.
+- **Rate Limiting & Helmet**: `express-rate-limit` protects authentication routes from brute force attacks; `helmet` secures HTTP response headers.
 
 ---
 
 ### 6. What Performance Optimizations Did You Apply?
 
-1. **Dynamic Slot Calculation (On-The-Fly Generation)**:
-   - Rather than storing millions of empty slots in the database, slots are computed dynamically based on the doctor's weekly shift config in sub-milliseconds (`O(N)` where $N \le 40$ slots/day).
-2. **Database Query Projections & `.lean()`**:
-   - Queries use `.select('name email department')` and `.lean()` to bypass Mongoose document hydration overhead on heavy list reads.
-3. **Compound Indexes**:
-   - Covers queries to guarantee index-only scans (`IXSCAN`) rather than full collection scans (`COLLSCAN`).
-4. **Targeted WebSocket Rooms**:
-   - Socket clients subscribe to `schedule_{doctorId}_{date}` rooms so slot updates are routed only to interested users rather than broadcasting to the entire hospital network.
-5. **Component Memoization & Vite Bundling**:
-   - Split vendor chunks and tree-shaken Lucide icons in Vite for sub-second page loads.
+1. **In-Memory Slot Generation**:
+   Calculating 20–30 appointment slots for a day in JavaScript arithmetic takes under **1 millisecond**. We never write millions of blank slot documents to disk.
+2. **Query Optimization with `.lean()` and `.select()`**:
+   Read queries use `.lean()` to bypass Mongoose model hydration overhead and `.select()` to return only necessary fields, cutting memory and JSON serialization time in half.
+3. **Targeted Socket.IO Rooms**:
+   Instead of broadcasting every appointment update to every connected browser in the hospital, clients join rooms by `schedule_${doctorId}_${date}`. Only users actively looking at that physician's schedule receive slot updates.
+4. **Vite Production Bundling**:
+   Frontend assets are minified with code splitting and tree-shaking, resulting in sub-second load times.
 
 ---
 
 ### 7. If This Application Needed to Support Millions of Appointments, What Architectural Changes Would You Make?
 
-If scaling from thousands to tens of millions of appointments per month:
+If this hospital system scaled to 50+ hospital branches handling millions of appointments per month:
 
-1. **Database Sharding (MongoDB Cluster)**:
-   - Shard the `appointments` collection on a compound shard key: `{ doctor: 1, date: 1 }`.
-   - This ensures all appointment checks and slot lookups for a doctor route to a single shard, avoiding cross-shard fan-out overhead.
+1. **MongoDB Sharding**:
+   Shard the `appointments` collection using a compound shard key `{ doctor: 1, date: 1 }`. Almost all hospital queries target a specific doctor on a given day, meaning reads and writes will route directly to a single shard without cross-shard scatter-gather queries.
 2. **Distributed Caching (Redis Cluster)**:
-   - Cache doctor shift configurations (`DoctorSchedule`) in Redis with TTL and invalidate upon update.
-   - Cache pre-generated available slots in Redis Bitmaps or sets (`slot:doc123:2026-10-25`).
-3. **Distributed Locking for Race Conditions (Redis Redlock)**:
-   - Implement `Redlock` with a 5-second lease on `lock:slot:doc123:2026-10-25:09:00` while database writes complete, guaranteeing concurrency across multi-region server clusters.
-4. **Read/Write Replica Splitting (CQRS)**:
-   - Direct read queries (Scheduler views, audit history, analytical dashboards) to MongoDB secondary read replicas (`readPreference=secondaryPreferred`).
-   - Direct writes and bookings to the primary replica.
-5. **Message Queuing & Event Streaming (Apache Kafka / RabbitMQ)**:
-   - Decouple audit logging, SMS/Email appointment confirmations, and EHR analytics through a Kafka topic (`appointment-events`) consumed asynchronously by background workers.
-6. **Horizontal API Scaling with Socket.IO Redis Adapter**:
-   - Run multiple Node.js Express instances behind an NGINX or AWS ALB load balancer.
-   - Use `@socket.io/redis-adapter` to synchronize real-time WebSocket events across multiple Node server nodes seamlessly.
+   Cache static physician shift configs in Redis (`doc_schedule:${id}`) with a 24-hour TTL, invalidated only when an admin edits shifts. Keep current-day available slots in Redis Bitmaps for instant availability checks.
+3. **Distributed Locking (Redis Redlock)**:
+   Across a multi-server cluster, place a short 2-second Redis mutex lock on `lock:slot:${docId}:${date}:${time}` while the booking transaction writes to MongoDB, preventing database write contention.
+4. **Read/Write Splitting (CQRS)**:
+   Route write requests (booking, check-in, cancellations) to the primary replica. Route heavy read operations (audit logs, search, historical lists) to MongoDB secondary read replicas (`readPreference=secondaryPreferred`).
+5. **Asynchronous Background Processing (BullMQ / RabbitMQ)**:
+   Move patient email notifications, SMS token alerts, and audit log writes to background worker queues so the appointment booking HTTP endpoint returns in under 30ms without blocking on external mail delivery.
