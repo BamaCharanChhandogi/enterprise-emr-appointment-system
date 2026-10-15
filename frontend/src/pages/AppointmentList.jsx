@@ -5,7 +5,8 @@ import * as Dialog from '@radix-ui/react-dialog';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { getSocket } from '../services/socket';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Printer } from 'lucide-react';
+import PrintSlipModal from '../components/PrintSlipModal';
 
 const AppointmentList = () => {
   const { user } = useAuth();
@@ -37,6 +38,9 @@ const AppointmentList = () => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [appToCancel, setAppToCancel] = useState(null);
   const [cancelReason, setCancelReason] = useState('Patient rescheduled');
+
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [appToPrint, setAppToPrint] = useState(null);
 
   const fetchAppointments = async (page = 1) => {
     setLoading(true);
@@ -322,10 +326,23 @@ const AppointmentList = () => {
                           </button>
                         )}
 
+                        {/* Print OPD Slip */}
+                        <button
+                          onClick={() => {
+                            setAppToPrint(app);
+                            setPrintModalOpen(true);
+                          }}
+                          title="Print OPD Token Slip"
+                          className="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-[11px] font-semibold transition shadow-2xs inline-flex items-center cursor-pointer"
+                        >
+                          <Printer className="w-3 h-3 text-slate-500 mr-1" />
+                          <span>Slip</span>
+                        </button>
+
                         {/* Consultation Notes Modal Trigger */}
                         <button
                           onClick={() => openEditDialog(app)}
-                          className="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-[11px] font-semibold transition shadow-2xs"
+                          className="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-[11px] font-semibold transition shadow-2xs cursor-pointer"
                         >
                           {user.role === 'DOCTOR' ? 'Consultation Notes' : 'Notes'}
                         </button>
@@ -525,6 +542,13 @@ const AppointmentList = () => {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      {/* OPD Clinical Slip Print Modal */}
+      <PrintSlipModal
+        open={printModalOpen}
+        onOpenChange={setPrintModalOpen}
+        appointment={appToPrint}
+      />
 
     </div>
   );

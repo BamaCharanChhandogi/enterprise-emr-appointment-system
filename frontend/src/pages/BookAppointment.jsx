@@ -6,8 +6,10 @@ import {
   CheckCircle,
   AlertCircle,
   User,
-  Clock
+  Clock,
+  Printer
 } from 'lucide-react';
+import PrintSlipModal from '../components/PrintSlipModal';
 
 const BookAppointment = () => {
   const location = useLocation();
@@ -43,6 +45,7 @@ const BookAppointment = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(null);
+  const [printModalOpen, setPrintModalOpen] = useState(false);
 
   useEffect(() => {
     api.get('/doctors').then(res => {
@@ -185,21 +188,37 @@ const BookAppointment = () => {
 
           <div className="flex justify-center space-x-2.5">
             <button
+              type="button"
+              onClick={() => setPrintModalOpen(true)}
+              className="btn-primary flex items-center space-x-1.5"
+            >
+              <Printer className="w-3.5 h-3.5 mr-1" />
+              <span>Print Patient Slip</span>
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setSuccess(null);
                 setSelectedSlot(null);
               }}
-              className="btn-primary"
+              className="btn-secondary"
             >
               Book Another
             </button>
             <button
+              type="button"
               onClick={() => navigate('/appointments')}
               className="btn-secondary"
             >
               View Directory
             </button>
           </div>
+
+          <PrintSlipModal
+            open={printModalOpen}
+            onOpenChange={setPrintModalOpen}
+            appointment={success}
+          />
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
