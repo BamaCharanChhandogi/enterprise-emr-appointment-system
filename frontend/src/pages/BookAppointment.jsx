@@ -155,35 +155,35 @@ const BookAppointment = () => {
       </div>
 
       {success ? (
-        <div className="elite-card p-6 text-center">
-          <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-[5px] flex items-center justify-center mx-auto mb-3">
-            <CheckCircle className="w-5 h-5" />
+        <div className="elite-card p-8 text-center rounded-xl">
+          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xs">
+            <CheckCircle className="w-6 h-6" />
           </div>
-          <h2 className="text-base font-bold text-[#0f172a]">Appointment Reserved Successfully</h2>
-          <p className="text-[12px] text-[#2555ff] font-mono font-semibold mt-0.5 mb-5">
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Appointment Reserved Successfully</h2>
+          <p className="text-[13px] text-[#2555ff] font-mono font-semibold mt-1 mb-6">
             Ref Number: {success.appointmentNumber}
           </p>
 
-          <div className="max-w-md mx-auto bg-[#f8fafc] border border-[#e2e8f0] p-4 text-left text-[12px] space-y-2 mb-6">
+          <div className="max-w-md mx-auto bg-slate-50/80 border border-slate-200/90 rounded-xl p-5 text-left text-[12px] space-y-2.5 mb-6 shadow-2xs">
             <div className="flex justify-between">
-              <span className="text-[#64748b]">Patient:</span>
-              <span className="font-semibold text-[#0f172a]">{success.patient?.name}</span>
+              <span className="text-slate-500">Patient:</span>
+              <span className="font-semibold text-slate-800">{success.patient?.name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#64748b]">Physician:</span>
-              <span className="font-semibold text-[#0f172a]">{success.doctor?.name}</span>
+              <span className="text-slate-500">Physician:</span>
+              <span className="font-semibold text-slate-800">{success.doctor?.name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#64748b]">Department:</span>
-              <span className="font-semibold text-[#0f172a]">{success.department}</span>
+              <span className="text-slate-500">Department:</span>
+              <span className="font-semibold text-slate-800">{success.department}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#64748b]">Schedule:</span>
+              <span className="text-slate-500">Schedule:</span>
               <span className="font-semibold text-[#2555ff]">{success.date} ({success.slotStartTime} - {success.slotEndTime})</span>
             </div>
           </div>
 
-          <div className="flex justify-center space-x-2">
+          <div className="flex justify-center space-x-2.5">
             <button
               onClick={() => {
                 setSuccess(null);
@@ -202,27 +202,27 @@ const BookAppointment = () => {
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-[12px] rounded-[5px] flex items-start space-x-2">
+            <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-[12px] rounded-xl flex items-start space-x-2.5">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Section 1: Patient Selection */}
-          <div className="elite-card p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[12px] font-bold text-[#0f172a] uppercase tracking-wider">
+          <div className="elite-card p-5">
+            <div className="flex items-center justify-between mb-3.5">
+              <span className="text-[12px] font-bold text-slate-800 uppercase tracking-wider">
                 1. Patient Information
               </span>
 
-              <div className="inline-flex border border-[#e2e8f0] p-0.5 rounded-[5px] bg-[#f8fafc]">
+              <div className="inline-flex border border-slate-200/90 p-1 rounded-lg bg-slate-50/80">
                 <button
                   type="button"
                   onClick={() => setPatientType('EXISTING')}
-                  className={`px-2.5 py-1 text-[11px] font-semibold rounded-[3px] transition ${
-                    patientType === 'EXISTING' ? 'bg-[#2555ff] text-white' : 'text-[#64748b]'
+                  className={`px-3 py-1 text-[11px] font-semibold rounded-md transition ${
+                    patientType === 'EXISTING' ? 'bg-[#2555ff] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Existing Patient
@@ -230,8 +230,8 @@ const BookAppointment = () => {
                 <button
                   type="button"
                   onClick={() => setPatientType('NEW')}
-                  className={`px-2.5 py-1 text-[11px] font-semibold rounded-[3px] transition ${
-                    patientType === 'NEW' ? 'bg-[#2555ff] text-white' : 'text-[#64748b]'
+                  className={`px-3 py-1 text-[11px] font-semibold rounded-md transition ${
+                    patientType === 'NEW' ? 'bg-[#2555ff] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   New Patient
@@ -253,10 +253,10 @@ const BookAppointment = () => {
                 </div>
 
                 {selectedPatient ? (
-                  <div className="p-3 bg-[#2555ff]/5 border border-[#2555ff]/20 rounded-[5px] flex items-center justify-between">
+                  <div className="p-3.5 bg-[#2555ff]/5 border border-[#2555ff]/20 rounded-xl flex items-center justify-between">
                     <div>
-                      <div className="text-[12px] font-bold text-[#0f172a]">{selectedPatient.name}</div>
-                      <div className="text-[11px] text-[#64748b] font-mono">
+                      <div className="text-[13px] font-bold text-slate-900">{selectedPatient.name}</div>
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
                         ID: {selectedPatient.patientId} • Phone: {selectedPatient.phone}
                       </div>
                     </div>
@@ -270,7 +270,7 @@ const BookAppointment = () => {
                   </div>
                 ) : (
                   patients.length > 0 && (
-                    <div className="border border-[#e2e8f0] rounded-[5px] divide-y divide-[#e2e8f0] max-h-36 overflow-y-auto">
+                    <div className="border border-slate-200/90 rounded-xl divide-y divide-slate-100 max-h-48 overflow-y-auto shadow-sm">
                       {patients.map(p => (
                         <div
                           key={p._id}
@@ -279,10 +279,10 @@ const BookAppointment = () => {
                             setPatients([]);
                             setSearchQuery('');
                           }}
-                          className="p-2 hover:bg-[#f8fafc] cursor-pointer flex justify-between items-center text-[12px]"
+                          className="p-3 hover:bg-slate-50 cursor-pointer flex justify-between items-center text-[12px] transition"
                         >
-                          <span className="font-semibold text-[#0f172a]">{p.name} ({p.patientId})</span>
-                          <span className="text-[#64748b] font-mono text-[11px]">{p.phone}</span>
+                          <span className="font-semibold text-slate-800">{p.name} ({p.patientId})</span>
+                          <span className="text-slate-500 font-mono text-[11px]">{p.phone}</span>
                         </div>
                       ))}
                     </div>
@@ -292,7 +292,7 @@ const BookAppointment = () => {
             ) : (
               <div className="grid grid-cols-2 gap-3 text-[12px]">
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Full Name *</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Full Name *</label>
                   <input
                     type="text"
                     required
@@ -303,7 +303,7 @@ const BookAppointment = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Phone *</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Phone *</label>
                   <input
                     type="tel"
                     required
@@ -318,14 +318,14 @@ const BookAppointment = () => {
           </div>
 
           {/* Section 2: Physician & Time */}
-          <div className="elite-card p-4">
-            <span className="text-[12px] font-bold text-[#0f172a] uppercase tracking-wider block mb-3">
+          <div className="elite-card p-5">
+            <span className="text-[12px] font-bold text-slate-800 uppercase tracking-wider block mb-3.5">
               2. Physician & Slot
             </span>
 
             <div className="grid grid-cols-2 gap-3 mb-3 text-[12px]">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Physician</label>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Physician</label>
                 <select
                   value={selectedDoctorId}
                   onChange={(e) => setSelectedDoctorId(e.target.value)}
@@ -338,7 +338,7 @@ const BookAppointment = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Date</label>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
                 <input
                   type="date"
                   value={date}
@@ -350,13 +350,13 @@ const BookAppointment = () => {
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1.5">
+              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                 Available Time Slots
               </label>
 
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 max-h-36 overflow-y-auto">
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-40 overflow-y-auto">
                 {availableSlots.filter(s => s.isAvailable).length === 0 ? (
-                  <div className="col-span-full py-3 text-center text-[11px] text-[#64748b]">
+                  <div className="col-span-full py-4 text-center text-[12px] text-slate-400">
                     No open slots on this date.
                   </div>
                 ) : (
@@ -367,10 +367,10 @@ const BookAppointment = () => {
                         key={i}
                         type="button"
                         onClick={() => setSelectedSlot(slot)}
-                        className={`py-1.5 px-2 rounded-[5px] border text-[11px] font-mono font-bold transition ${
+                        className={`py-2 px-2.5 rounded-lg border text-[12px] font-mono font-bold transition shadow-2xs ${
                           isSelected
-                            ? 'bg-[#2555ff] text-white border-[#2555ff]'
-                            : 'bg-white text-[#0f172a] hover:bg-[#f1f5f9] border-[#e2e8f0]'
+                            ? 'bg-[#2555ff] text-white border-[#2555ff] shadow-xs'
+                            : 'bg-white text-slate-800 hover:bg-slate-50 border-slate-200'
                         }`}
                       >
                         {slot.startTime}
@@ -383,14 +383,14 @@ const BookAppointment = () => {
           </div>
 
           {/* Section 3: Details */}
-          <div className="elite-card p-4">
-            <span className="text-[12px] font-bold text-[#0f172a] uppercase tracking-wider block mb-3">
+          <div className="elite-card p-5">
+            <span className="text-[12px] font-bold text-slate-800 uppercase tracking-wider block mb-3.5">
               3. Consultation Details
             </span>
 
-            <div className="space-y-3 text-[12px]">
+            <div className="space-y-3.5 text-[12px]">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Purpose</label>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Purpose</label>
                 <input
                   type="text"
                   value={purpose}
@@ -401,7 +401,7 @@ const BookAppointment = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Intake Notes</label>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Intake Notes</label>
                 <textarea
                   rows="2"
                   value={notes}
@@ -416,7 +416,7 @@ const BookAppointment = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-[#2555ff] hover:bg-[#1b44db] text-white text-[13px] font-semibold rounded-[5px] transition disabled:opacity-50"
+            className="w-full py-3 bg-[#2555ff] hover:bg-[#1b44db] text-white text-[13px] font-semibold rounded-lg transition shadow-xs disabled:opacity-50"
           >
             {loading ? 'Reserving slot...' : 'Confirm Appointment'}
           </button>

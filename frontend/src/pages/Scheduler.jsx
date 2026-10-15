@@ -222,28 +222,28 @@ const Scheduler = () => {
 
       {/* Status Summary Bar */}
       {slotData && (
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-[#e2e8f0] px-4 py-2.5 rounded-[5px] mb-4 text-[12px]">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200/90 px-5 py-3 rounded-xl mb-5 text-[12px] shadow-2xs">
           <div className="flex items-center space-x-2 text-[#0f172a]">
-            <span className="font-semibold">{slotData.day}, {slotData.date}</span>
-            <span className="text-[#cbd5e1]">•</span>
-            <span>Total Slots: <b>{slotData.totalSlots}</b></span>
-            <span className="text-[#cbd5e1]">•</span>
-            <span className="text-[#15803d] font-semibold">{slotData.availableSlotsCount} Open</span>
-            <span className="text-[#cbd5e1]">•</span>
+            <span className="font-semibold text-slate-800">{slotData.day}, {slotData.date}</span>
+            <span className="text-slate-300">•</span>
+            <span>Total Slots: <b className="text-slate-800">{slotData.totalSlots}</b></span>
+            <span className="text-slate-300">•</span>
+            <span className="text-emerald-700 font-semibold">{slotData.availableSlotsCount} Open</span>
+            <span className="text-slate-300">•</span>
             <span className="text-[#2555ff] font-semibold">{slotData.bookedSlotsCount} Booked</span>
           </div>
 
-          <div className="flex items-center space-x-3 text-[#64748b] text-[11px]">
-            <span className="flex items-center space-x-1">
-              <span className="w-2.5 h-2.5 rounded-[2px] bg-emerald-500"></span>
+          <div className="flex items-center space-x-3 text-slate-500 text-[11px]">
+            <span className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
               <span>Available</span>
             </span>
-            <span className="flex items-center space-x-1">
-              <span className="w-2.5 h-2.5 rounded-[2px] bg-[#2555ff]"></span>
+            <span className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#2555ff]"></span>
               <span>Booked</span>
             </span>
-            <span className="flex items-center space-x-1">
-              <span className="w-2.5 h-2.5 rounded-[2px] bg-[#cbd5e1]"></span>
+            <span className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
               <span>Elapsed</span>
             </span>
           </div>
@@ -251,30 +251,30 @@ const Scheduler = () => {
       )}
 
       {/* Slot Grid */}
-      <div className="elite-card p-5">
+      <div className="elite-card p-6">
         {loading ? (
-          <div className="py-16 text-center text-[12px] text-[#64748b]">Calculating slot matrix...</div>
+          <div className="py-16 text-center text-[12px] text-slate-500">Calculating slot matrix...</div>
         ) : error ? (
-          <div className="py-12 text-center text-[#b91c1c] text-[12px]">{error}</div>
+          <div className="py-12 text-center text-rose-600 text-[12px]">{error}</div>
         ) : slotData?.isPastDate ? (
-          <div className="py-16 text-center text-[#64748b] text-[12px]">Past dates are not available for booking.</div>
+          <div className="py-16 text-center text-slate-500 text-[12px]">Past dates are not available for booking.</div>
         ) : slotData?.slots?.length === 0 ? (
-          <div className="py-16 text-center text-[#64748b] text-[12px]">
+          <div className="py-16 text-center text-slate-500 text-[12px]">
             {slotData?.message || 'No active shifts configured on this date.'}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5">
             {slotData?.slots.map((slot, index) => {
               let style = isDoctor
-                ? "border-[#2555ff]/30 bg-[#2555ff]/5 text-[#2555ff] cursor-default"
-                : "border-[#2555ff]/30 bg-[#2555ff]/5 text-[#2555ff] hover:bg-[#2555ff] hover:text-white cursor-pointer";
+                ? "border-[#2555ff]/25 bg-[#2555ff]/5 text-[#2555ff] cursor-default"
+                : "border-[#2555ff]/25 bg-[#2555ff]/5 text-[#2555ff] hover:bg-[#2555ff] hover:text-white hover:shadow-xs cursor-pointer";
               let badge = "Open";
 
               if (slot.isBooked) {
-                style = "border-[#e2e8f0] bg-slate-100 text-[#0f172a]/50 cursor-not-allowed";
+                style = "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed";
                 badge = "Booked";
               } else if (slot.isPastTime) {
-                style = "border-[#e2e8f0] bg-[#f8fafc] text-[#94a3b8] cursor-not-allowed";
+                style = "border-slate-100 bg-[#f8fafc] text-slate-300 cursor-not-allowed";
                 badge = "Elapsed";
               }
 
@@ -282,10 +282,10 @@ const Scheduler = () => {
                 <div
                   key={index}
                   onClick={() => handleBookSlotClick(slot)}
-                  className={`p-2.5 rounded-[5px] border text-left transition ${style}`}
+                  className={`p-3 rounded-lg border text-left transition-all duration-150 shadow-2xs ${style}`}
                 >
                   <div className="text-[13px] font-mono font-bold leading-tight">{slot.startTime}</div>
-                  <div className="text-[10px] uppercase font-semibold opacity-75 mt-0.5">{badge}</div>
+                  <div className="text-[10px] uppercase font-semibold opacity-80 mt-1">{badge}</div>
                 </div>
               );
             })}

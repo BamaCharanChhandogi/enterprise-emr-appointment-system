@@ -22,7 +22,7 @@ function App() {
             richColors
             toastOptions={{
               style: {
-                borderRadius: '5px',
+                borderRadius: '8px',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '12px'
               }

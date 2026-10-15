@@ -12,20 +12,20 @@ const Navbar = () => {
   };
 
   const navItemClass = ({ isActive }) =>
-    `px-3.5 py-1.5 text-[13px] font-medium transition-all whitespace-nowrap rounded-[5px] ${
+    `px-3.5 py-1.5 text-[13px] font-medium transition-all whitespace-nowrap rounded-lg cursor-pointer ${
       isActive
-        ? 'bg-[#2555ff] text-white shadow-sm font-semibold'
-        : 'text-[#475569] hover:text-[#0f172a] hover:bg-slate-100/70'
+        ? 'bg-[#2555ff] text-white shadow-xs font-semibold'
+        : 'text-[#475569] hover:text-[#0f172a] hover:bg-slate-100/80'
     }`;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#e2e8f0]">
+    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#e2e8f0]/90">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between">
           
           {/* 1. Left: Brand Logo & Title */}
           <Link to="/dashboard" className="flex items-center space-x-2.5 shrink-0">
-            <div className="w-8 h-8 rounded-[5px] bg-[#2555ff] flex items-center justify-center text-white shadow-sm font-bold text-base">
+            <div className="w-8 h-8 rounded-lg bg-[#2555ff] flex items-center justify-center text-white shadow-xs font-bold text-base">
               +
             </div>
             <div className="leading-tight">
@@ -40,7 +40,7 @@ const Navbar = () => {
 
           {/* 2. Middle: Floating Pill Container with clean feature navigation */}
           {user && (
-            <nav className="hidden lg:flex items-center bg-[#f8fafc] border border-[#e2e8f0] p-1 rounded-[5px] shadow-sm space-x-1">
+            <nav className="hidden lg:flex items-center bg-[#f8fafc] border border-[#e2e8f0] p-1 rounded-xl shadow-2xs space-x-1">
               <NavLink to="/dashboard" className={navItemClass}>
                 Dashboard
               </NavLink>
@@ -87,13 +87,13 @@ const Navbar = () => {
                   </div>
                 </div>
 
-                <div className="w-8 h-8 rounded-[5px] bg-[#0f172a] text-white flex items-center justify-center font-bold text-xs uppercase">
+                <div className="w-8 h-8 rounded-full bg-[#0f172a] text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs">
                   {user.name?.charAt(0)}
                 </div>
 
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-1.5 text-[12px] font-medium text-[#475569] hover:text-[#b91c1c] hover:bg-rose-50 border border-[#e2e8f0] rounded-[5px] transition"
+                  className="px-3 py-1.5 text-[12px] font-medium text-[#475569] hover:text-[#b91c1c] hover:bg-rose-50 border border-[#e2e8f0] rounded-lg transition cursor-pointer"
                 >
                   Sign Out
                 </button>
@@ -101,7 +101,7 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="px-4 py-1.5 bg-[#2555ff] hover:bg-[#1b44db] text-white text-[13px] font-medium rounded-[5px] transition shadow-sm"
+                className="px-4 py-1.5 bg-[#2555ff] hover:bg-[#1b44db] text-white text-[13px] font-medium rounded-lg transition shadow-xs"
               >
                 Sign In
               </Link>

@@ -146,36 +146,36 @@ const StaffManagement = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Doctors Directory */}
-        <div className="elite-card p-3 h-fit">
-          <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#64748b] mb-2 px-1">
+        <div className="elite-card p-4 h-fit">
+          <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3 px-1">
             Doctors ({doctors.length})
           </h2>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {doctors.map(d => (
               <div
                 key={d._id}
                 onClick={() => selectDoctor(d)}
-                className={`p-2.5 rounded-[5px] cursor-pointer transition text-[12px] ${
+                className={`p-3 rounded-lg cursor-pointer transition text-[12px] ${
                   selectedDoctor?._id === d._id
-                    ? 'bg-[#2555ff]/10 border border-[#2555ff]/30 text-[#0f172a]'
-                    : 'hover:bg-[#f8fafc] border border-transparent text-[#64748b]'
+                    ? 'bg-[#2555ff]/10 border border-[#2555ff]/30 text-slate-900 shadow-2xs'
+                    : 'hover:bg-slate-50 border border-transparent text-slate-600'
                 }`}
               >
-                <div className="font-semibold text-[#0f172a]">{d.name}</div>
-                <div className="text-[11px] text-[#2555ff]">{d.department}</div>
+                <div className="font-semibold text-slate-900">{d.name}</div>
+                <div className="text-[11px] text-[#2555ff] mt-0.5">{d.department}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Schedule Editor */}
-        <div className="lg:col-span-3 elite-card p-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0] mb-4">
+        <div className="lg:col-span-3 elite-card p-6">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
             <div>
-              <h2 className="text-[14px] font-bold text-[#0f172a]">
+              <h2 className="text-[15px] font-bold text-slate-900 tracking-tight">
                 Weekly Shift: {selectedDoctor?.name}
               </h2>
-              <p className="text-[11px] text-[#2555ff] font-medium">{selectedDoctor?.department}</p>
+              <p className="text-[12px] text-[#2555ff] font-medium">{selectedDoctor?.department}</p>
             </div>
 
             <button
@@ -185,46 +185,46 @@ const StaffManagement = () => {
             >
               {saveSuccess ? (
                 <>
-                  <CheckCircle className="w-3.5 h-3.5 text-white" />
+                  <CheckCircle className="w-3.5 h-3.5 text-white mr-1.5" />
                   <span>Saved!</span>
                 </>
               ) : (
                 <>
-                  <Save className="w-3.5 h-3.5" />
+                  <Save className="w-3.5 h-3.5 mr-1.5" />
                   <span>{loading ? 'Saving...' : 'Save Shifts'}</span>
                 </>
               )}
             </button>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {schedule.map((dayPlan, idx) => (
               <div
                 key={dayPlan.day}
-                className={`p-3 rounded-[5px] border transition ${
+                className={`p-4 rounded-xl border transition-all ${
                   dayPlan.isActive
-                    ? 'border-[#e2e8f0] bg-white'
-                    : 'border-[#f1f5f9] bg-[#f8fafc] opacity-50'
+                    ? 'border-slate-200/90 bg-white shadow-2xs'
+                    : 'border-slate-100 bg-[#f8fafc] opacity-50'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                  <label className="flex items-center space-x-2.5 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={dayPlan.isActive}
                       onChange={() => handleDayToggle(idx)}
-                      className="rounded-[3px] text-[#2555ff] focus:ring-[#2555ff]"
+                      className="rounded text-[#2555ff] focus:ring-[#2555ff] w-4 h-4"
                     />
-                    <span className="font-semibold text-[#0f172a] text-[13px]">{dayPlan.day}</span>
+                    <span className="font-semibold text-slate-900 text-[13px]">{dayPlan.day}</span>
                   </label>
 
                   {dayPlan.isActive && (
                     <div className="flex items-center space-x-2 text-[11px]">
-                      <span className="text-[#64748b]">Slot Duration:</span>
+                      <span className="text-slate-500 font-medium">Slot Duration:</span>
                       <select
                         value={dayPlan.slotDuration}
                         onChange={(e) => handleSlotDurationChange(idx, e.target.value)}
-                        className="elite-input py-0.5 px-2 text-[11px] w-auto font-semibold"
+                        className="elite-input py-1 px-2.5 text-[11px] w-auto font-semibold"
                       >
                         <option value={10}>10m</option>
                         <option value={15}>15m</option>
@@ -237,13 +237,13 @@ const StaffManagement = () => {
                 </div>
 
                 {dayPlan.isActive && (
-                  <div className="mt-2.5 pt-2 border-t border-[#f1f5f9] grid grid-cols-2 gap-3 text-[11px]">
-                    <div className="bg-[#f8fafc] border border-[#e2e8f0] p-2 rounded-[5px]">
+                  <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-2 gap-3 text-[11px]">
+                    <div className="bg-[#f8fafc] border border-slate-200/90 p-3 rounded-lg">
                       <span className="font-semibold text-[#2555ff] block mb-1 uppercase text-[10px] tracking-wider">
                         Sessions
                       </span>
                       {dayPlan.sessions?.map((s, sIdx) => (
-                        <div key={sIdx} className="text-[#0f172a] font-mono">
+                        <div key={sIdx} className="text-slate-800 font-mono">
                           {s.name}: <b>{s.startTime} – {s.endTime}</b>
                         </div>
                       ))}
@@ -272,13 +272,14 @@ const StaffManagement = () => {
       </div>
 
       {/* Add Doctor Modal */}
+      {/* Add Doctor Modal */}
       {showDoctorModal && (
-        <div className="fixed inset-0 bg-[#0f172a]/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleCreateDoctor} className="bg-white rounded-[5px] max-w-sm w-full p-5 shadow-xl border border-[#e2e8f0]">
-            <h3 className="text-[14px] font-bold text-[#0f172a] mb-3">Add New Doctor</h3>
-            <div className="space-y-2.5 text-[12px]">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleCreateDoctor} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <h3 className="text-[16px] font-bold text-slate-900 tracking-tight mb-4">Add New Doctor</h3>
+            <div className="space-y-3 text-[12px]">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Doctor Name *</label>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Doctor Name *</label>
                 <input
                   type="text"
                   required
@@ -289,7 +290,7 @@ const StaffManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Email *</label>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Email *</label>
                 <input
                   type="email"
                   required
@@ -300,7 +301,7 @@ const StaffManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Department *</label>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Department *</label>
                 <input
                   type="text"
                   required
@@ -312,17 +313,17 @@ const StaffManagement = () => {
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end space-x-2">
+            <div className="mt-5 flex justify-end space-x-2.5">
               <button
                 type="button"
                 onClick={() => setShowDoctorModal(false)}
-                className="btn-secondary text-[11px] py-1 px-3"
+                className="btn-secondary text-[12px] py-1.5 px-4"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn-primary text-[11px] py-1 px-3"
+                className="btn-primary text-[12px] py-1.5 px-4"
               >
                 Create Doctor
               </button>
@@ -333,12 +334,12 @@ const StaffManagement = () => {
 
       {/* Add Receptionist Modal */}
       {showReceptionModal && (
-        <div className="fixed inset-0 bg-[#0f172a]/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleCreateReceptionist} className="bg-white rounded-[5px] max-w-sm w-full p-5 shadow-xl border border-[#e2e8f0]">
-            <h3 className="text-[14px] font-bold text-[#0f172a] mb-3">Add New Receptionist</h3>
-            <div className="space-y-2.5 text-[12px]">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleCreateReceptionist} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <h3 className="text-[16px] font-bold text-slate-900 tracking-tight mb-4">Add New Receptionist</h3>
+            <div className="space-y-3 text-[12px]">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Name *</label>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Name *</label>
                 <input
                   type="text"
                   required
@@ -349,7 +350,7 @@ const StaffManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Email *</label>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Email *</label>
                 <input
                   type="email"
                   required
@@ -361,17 +362,17 @@ const StaffManagement = () => {
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end space-x-2">
+            <div className="mt-5 flex justify-end space-x-2.5">
               <button
                 type="button"
                 onClick={() => setShowReceptionModal(false)}
-                className="btn-secondary text-[11px] py-1 px-3"
+                className="btn-secondary text-[12px] py-1.5 px-4"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn-primary text-[11px] py-1 px-3"
+                className="btn-primary text-[12px] py-1.5 px-4"
               >
                 Create
               </button>

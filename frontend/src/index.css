@@ -8,11 +8,13 @@
     --border-color: #e2e8f0;
     --bg-page: #f8fafc;
     --bg-card: #ffffff;
-    --radius: 5px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
   }
 
   * {
-    border-radius: var(--radius);
     box-sizing: border-box;
   }
 
@@ -23,6 +25,25 @@
     letter-spacing: -0.011em;
     -webkit-font-smoothing: antialiased;
   }
+
+  button,
+  [role="button"],
+  select,
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"],
+  input[type="checkbox"],
+  input[type="radio"],
+  a {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"]:disabled,
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
 }
 
 /* Elite Architectural Button Tokens */
@@ -31,19 +52,25 @@
   color: #ffffff;
   font-weight: 500;
   font-size: 0.8125rem;
-  padding: 0.4rem 0.85rem;
-  border-radius: 5px !important;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid #2555ff;
   cursor: pointer;
+  box-shadow: 0 1px 2px 0 rgba(37, 85, 255, 0.2);
 }
 
 .btn-primary:hover {
   background-color: #1b44db;
   border-color: #1b44db;
+  box-shadow: 0 3px 6px 0 rgba(37, 85, 255, 0.28);
+}
+
+.btn-primary:active {
+  background-color: #1636b0;
 }
 
 .btn-secondary {
@@ -51,49 +78,76 @@
   color: #0f172a;
   font-weight: 500;
   font-size: 0.8125rem;
-  padding: 0.4rem 0.85rem;
-  border-radius: 5px !important;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
 }
 
 .btn-secondary:hover {
   background-color: #f8fafc;
   border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.btn-secondary:active {
+  background-color: #f1f5f9;
 }
 
 /* Precision Elite Card */
 .elite-card {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 5px !important;
-  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Precision Minimal Input */
+.elite-card:hover {
+  border-color: #cbd5e1;
+}
+
+/* Precision Minimal Input & Searchbox */
 .elite-input {
   background-color: #ffffff;
   border: 1px solid #cbd5e1;
   color: #0f172a;
   font-size: 0.8125rem;
-  padding: 0.4rem 0.75rem;
-  border-radius: 5px !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.02);
+}
+
+.elite-input:hover {
+  border-color: #94a3b8;
 }
 
 .elite-input:focus {
   outline: none;
   border-color: #2555ff;
-  box-shadow: 0 0 0 2px rgba(37, 85, 255, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 85, 255, 0.14);
 }
 
 .elite-input-with-icon {
   padding-left: 2.25rem !important;
+}
+
+/* Elite Custom Dropdown Select */
+select.elite-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.9rem;
+  padding-right: 2.25rem;
+  cursor: pointer;
 }
 
 /* Precision Table Tokens */
@@ -112,46 +166,54 @@
   background-color: rgba(37, 85, 255, 0.08);
   color: #2555ff;
   border: 1px solid rgba(37, 85, 255, 0.2);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   font-weight: 600;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .badge-arrived {
   background-color: #fffbeb;
   color: #b45309;
   border: 1px solid #fde68a;
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   font-weight: 600;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .badge-completed {
   background-color: #f0fdf4;
   color: #15803d;
   border: 1px solid #bbf7d0;
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   font-weight: 600;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .badge-cancelled {
   background-color: #fef2f2;
   color: #b91c1c;
   border: 1px solid #fecaca;
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   font-weight: 600;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
 }

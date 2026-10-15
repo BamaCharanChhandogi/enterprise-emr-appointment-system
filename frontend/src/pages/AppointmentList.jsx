@@ -167,17 +167,17 @@ const AppointmentList = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="elite-card p-4 mb-4 space-y-3">
+      <div className="elite-card p-5 mb-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="md:col-span-2 relative">
-            <Search className="w-3.5 h-3.5 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchAppointments(1)}
               placeholder="Search patient name, phone, or appointment # (Press Enter)..."
-              className="elite-input elite-input-with-icon text-[12px]"
+              className="elite-input elite-input-with-icon text-[13px]"
             />
           </div>
 
@@ -185,7 +185,7 @@ const AppointmentList = () => {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="elite-input text-[12px]"
+              className="elite-input text-[13px]"
             >
               <option value="">All Statuses</option>
               <option value="Scheduled">Scheduled</option>
@@ -203,7 +203,7 @@ const AppointmentList = () => {
                 setSortBy(sb);
                 setSortOrder(so);
               }}
-              className="elite-input text-[12px]"
+              className="elite-input text-[13px]"
             >
               <option value="date-desc">Date (Newest First)</option>
               <option value="date-asc">Date (Oldest First)</option>
@@ -212,27 +212,27 @@ const AppointmentList = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-[#e2e8f0] text-[11px]">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-[12px]">
           <div className="flex items-center space-x-2">
-            <span className="font-semibold text-[#64748b]">Date Range:</span>
+            <span className="font-semibold text-slate-500">Date Range:</span>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="elite-input py-1 px-2 text-[11px] w-auto inline-block"
+              className="elite-input py-1 px-2.5 text-[12px] w-auto inline-block"
             />
-            <span className="text-[#94a3b8]">to</span>
+            <span className="text-slate-400">to</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="elite-input py-1 px-2 text-[11px] w-auto inline-block"
+              className="elite-input py-1 px-2.5 text-[12px] w-auto inline-block"
             />
           </div>
 
           <button
             onClick={() => fetchAppointments(1)}
-            className="btn-primary py-1 px-3 text-[11px]"
+            className="btn-primary py-1.5 px-4 text-[12px]"
           >
             Apply Filters
           </button>
@@ -300,13 +300,13 @@ const AppointmentList = () => {
                         {getStatusBadge(app.status)}
                       </td>
 
-                      <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
                         {/* Receptionist: Mark Arrived */}
                         {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && app.status === 'Scheduled' && (
                           <button
                             onClick={() => handleMarkArrived(app._id)}
                             disabled={actionLoading}
-                            className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-[#b45309] border border-amber-200 rounded-[4px] text-[10px] font-semibold transition"
+                            className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/90 rounded-md text-[11px] font-semibold transition"
                           >
                             Mark Arrived
                           </button>
@@ -315,7 +315,7 @@ const AppointmentList = () => {
                         {/* Consultation Notes Modal Trigger */}
                         <button
                           onClick={() => openEditDialog(app)}
-                          className="px-2 py-0.5 bg-white hover:bg-slate-50 text-[#0f172a] border border-[#e2e8f0] rounded-[4px] text-[10px] font-semibold transition"
+                          className="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-[11px] font-semibold transition shadow-2xs"
                         >
                           {user.role === 'DOCTOR' ? 'Consultation Notes' : 'Notes'}
                         </button>
@@ -325,7 +325,7 @@ const AppointmentList = () => {
                           <button
                             onClick={() => handleCancel(app._id)}
                             disabled={actionLoading}
-                            className="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-[#b91c1c] border border-rose-200 rounded-[4px] text-[10px] font-semibold transition"
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/90 rounded-md text-[11px] font-semibold transition"
                           >
                             Cancel
                           </button>
@@ -340,29 +340,29 @@ const AppointmentList = () => {
         )}
 
         {/* Pagination */}
-        <div className="px-4 py-2.5 bg-[#f8fafc] border-t border-[#e2e8f0] flex items-center justify-between text-[11px] text-[#64748b]">
+        <div className="px-5 py-3 bg-[#f8fafc] border-t border-slate-100 flex items-center justify-between text-[12px] text-slate-500">
           <div>
-            Showing <span className="font-semibold text-[#0f172a]">{appointments.length}</span> of{' '}
-            <span className="font-semibold text-[#0f172a]">{pagination.totalItems}</span> appointments
+            Showing <span className="font-semibold text-slate-800">{appointments.length}</span> of{' '}
+            <span className="font-semibold text-slate-800">{pagination.totalItems}</span> appointments
           </div>
 
           <div className="flex items-center space-x-1.5">
             <button
               onClick={() => fetchAppointments(pagination.currentPage - 1)}
               disabled={pagination.currentPage <= 1 || loading}
-              className="p-1 rounded-[4px] border border-[#e2e8f0] bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition"
+              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition shadow-2xs"
             >
-              <ChevronLeft className="w-3.5 h-3.5 text-[#0f172a]" />
+              <ChevronLeft className="w-3.5 h-3.5 text-slate-700" />
             </button>
-            <span className="px-2 font-medium text-[#0f172a]">
+            <span className="px-2.5 font-medium text-slate-800 text-[12px]">
               Page {pagination.currentPage} of {pagination.totalPages || 1}
             </span>
             <button
               onClick={() => fetchAppointments(pagination.currentPage + 1)}
               disabled={pagination.currentPage >= pagination.totalPages || loading}
-              className="p-1 rounded-[4px] border border-[#e2e8f0] bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition"
+              className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition shadow-2xs"
             >
-              <ChevronRight className="w-3.5 h-3.5 text-[#0f172a]" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-700" />
             </button>
           </div>
         </div>
@@ -371,18 +371,18 @@ const AppointmentList = () => {
       {/* Radix UI Consultation Notes Modal */}
       <Dialog.Root open={openModal} onOpenChange={setOpenModal}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-[#0f172a]/50 backdrop-blur-xs z-50 animate-in fade-in" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-lg w-full bg-white rounded-[5px] p-6 shadow-2xl border border-[#e2e8f0] z-50">
-            <Dialog.Title className="text-[15px] font-bold text-[#0f172a]">
+          <Dialog.Overlay className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 animate-in fade-in" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-lg w-full bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 z-50">
+            <Dialog.Title className="text-[16px] font-bold text-slate-900 tracking-tight">
               Clinical Consultation: {selectedApp?.appointmentNumber}
             </Dialog.Title>
-            <Dialog.Description className="text-[12px] text-[#64748b] mt-0.5 mb-4">
-              Patient: <b>{selectedApp?.patient?.name}</b> • Attending: <b>{selectedApp?.doctor?.name}</b>
+            <Dialog.Description className="text-[12px] text-slate-500 mt-1 mb-5">
+              Patient: <b className="text-slate-800">{selectedApp?.patient?.name}</b> • Attending: <b className="text-slate-800">{selectedApp?.doctor?.name}</b>
             </Dialog.Description>
 
-            <div className="space-y-3 text-[12px]">
+            <div className="space-y-3.5 text-[12px]">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                   Status Workflow
                 </label>
                 <select
@@ -398,7 +398,7 @@ const AppointmentList = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                   Chief Complaint / Purpose
                 </label>
                 <input
@@ -410,7 +410,7 @@ const AppointmentList = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
                   Reception Notes
                 </label>
                 <textarea
@@ -422,7 +422,7 @@ const AppointmentList = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#2555ff] uppercase mb-1">
+                <label className="block text-[11px] font-semibold text-[#2555ff] uppercase tracking-wider mb-1.5">
                   Physician Consultation Notes & Prescription
                 </label>
                 <textarea
@@ -435,11 +435,11 @@ const AppointmentList = () => {
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end space-x-2">
+            <div className="mt-6 flex justify-end space-x-2.5">
               <button
                 type="button"
                 onClick={() => setOpenModal(false)}
-                className="btn-secondary text-[11px] py-1 px-3"
+                className="btn-secondary text-[12px] py-1.5 px-4"
               >
                 Cancel
               </button>
@@ -447,7 +447,7 @@ const AppointmentList = () => {
                 type="button"
                 onClick={handleSaveNotes}
                 disabled={actionLoading}
-                className="btn-primary text-[11px] py-1 px-3"
+                className="btn-primary text-[12px] py-1.5 px-4"
               >
                 {actionLoading ? 'Saving...' : 'Save Consultation'}
               </button>
