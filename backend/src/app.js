@@ -10,6 +10,7 @@ const slotRoutes = require('./routes/slotRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 const { successResponse } = require('./utils/apiResponse');
+const mongoose = require('mongoose');
 
 const app = express();
 
@@ -53,11 +54,23 @@ const authLimiter = rateLimit({
 });
 app.use('/api/v1/auth', authLimiter);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Health check endpoints (supports standard monitoring paths)
+const healthHandler = (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
   return successResponse(res, 200, 'Enterprise EMR API is running smoothly', {
-    uptime: process.uptime(),
+    status: isDbConnected ? 'UP' : 'DEGRADED',
+    database: isDbConnected ? 'connected' : 'disconnected',
+    uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString()
+  });
+};
+
+app.get(['/health', '/api/health', '/api/v1/health'], healthHandler);
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'UP',
+    service: 'Enterprise EMR Appointment System API',
+    health: '/api/health'
   });
 });
 
