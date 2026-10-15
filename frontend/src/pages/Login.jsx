@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('admin@emr.com');
   const [password, setPassword] = useState('password123');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -39,16 +41,18 @@ const Login = () => {
         setEmail('house@emr.com');
         setPassword('password123');
         break;
+      default:
+        break;
     }
   };
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 bg-[#f8fafc]">
-      <div className="max-w-[420px] w-full bg-white border border-slate-200/90 rounded-2xl p-8 shadow-sm">
+      <div className="max-w-[420px] w-full bg-white border border-slate-200/90 rounded-[28px] p-8 shadow-xs">
         
         {/* Header */}
         <div className="mb-6">
-          <div className="w-9 h-9 rounded-xl bg-[#2555ff] text-white flex items-center justify-center font-bold text-lg mb-3.5 shadow-xs">
+          <div className="w-9 h-9 rounded-xl bg-[#1e40af] text-white flex items-center justify-center font-bold text-lg mb-3.5 shadow-xs">
             +
           </div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">Staff Sign In</h1>
@@ -56,7 +60,7 @@ const Login = () => {
         </div>
 
         {error && (
-          <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-[12px] rounded-xl">
+          <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-[12px] rounded-2xl">
             {error}
           </div>
         )}
@@ -71,8 +75,8 @@ const Login = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="doctor@hospital.org"
-              className="elite-input"
+              placeholder="doctor@emr.com"
+              className="elite-input rounded-xl text-xs font-mono"
             />
           </div>
 
@@ -80,20 +84,29 @@ const Login = () => {
             <label className="block text-[12px] font-semibold text-slate-800 mb-1.5">
               Password
             </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="elite-input"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="elite-input rounded-xl text-xs font-mono pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-[#2555ff] hover:bg-[#1b44db] text-white text-[13px] font-semibold rounded-lg transition shadow-xs disabled:opacity-50 cursor-pointer"
+            className="w-full py-3 bg-[#1e40af] hover:bg-[#1e3a8a] text-white text-[13px] font-semibold rounded-full transition shadow-xs disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Authenticating...' : 'Sign In'}
           </button>
@@ -102,31 +115,34 @@ const Login = () => {
         {/* Demo Fast Switch */}
         <div className="mt-8 pt-5 border-t border-slate-100">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block mb-2.5">
-            Select Role Account:
+            Quick Test Accounts:
           </span>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => handleSelectRole('ADMIN')}
-              className="py-2 px-2 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-800 transition shadow-2xs cursor-pointer"
+              className="py-2 px-2 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-800 transition shadow-2xs cursor-pointer"
             >
               Super Admin
             </button>
             <button
               type="button"
               onClick={() => handleSelectRole('RECEPTIONIST')}
-              className="py-2 px-2 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-800 transition shadow-2xs cursor-pointer"
+              className="py-2 px-2 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-800 transition shadow-2xs cursor-pointer"
             >
               Receptionist
             </button>
             <button
               type="button"
               onClick={() => handleSelectRole('DOCTOR')}
-              className="py-2 px-2 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-800 transition shadow-2xs cursor-pointer"
+              className="py-2 px-2 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-800 transition shadow-2xs cursor-pointer"
             >
               Dr. House
             </button>
           </div>
+          <p className="text-[10px] text-slate-400 mt-2.5 text-center">
+            New staff onboarded by Super Admin can sign in with their assigned email and temporary password.
+          </p>
         </div>
 
       </div>

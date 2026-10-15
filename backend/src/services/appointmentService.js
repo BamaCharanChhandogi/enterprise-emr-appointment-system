@@ -5,6 +5,7 @@ const User = require('../models/User');
 const { AppError } = require('../utils/apiResponse');
 const { logAction } = require('./auditService');
 const { emitAppointmentUpdate } = require('../config/socket');
+const emailService = require('./emailService');
 
 class AppointmentService {
   /**
@@ -171,6 +172,20 @@ class AppointmentService {
 
       // Emit real-time WebSocket event
       emitAppointmentUpdate('CREATED', populated);
+
+      // Dispatch patient confirmation email asynchronously if email present
+      if (patientRecord.email) {
+        emailService.sendAppointmentConfirmationEmail({
+          to: patientRecord.email,
+          patientName: patientRecord.name,
+          doctorName: doctor.name,
+          department,
+          date,
+          slotStartTime,
+          slotEndTime,
+          appointmentNumber
+        }).catch(e => console.error('Confirmation email error:', e.message));
+      }
 
       return populated;
     } catch (err) {

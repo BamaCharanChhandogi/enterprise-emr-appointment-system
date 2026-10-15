@@ -3,6 +3,7 @@ const DoctorSchedule = require('../models/DoctorSchedule');
 const Appointment = require('../models/Appointment');
 const { AppError } = require('../utils/apiResponse');
 const { logAction } = require('./auditService');
+const emailService = require('./emailService');
 
 // Helper: converts "09:30" to minutes from midnight (570)
 const timeToMinutes = (timeStr) => {
@@ -71,6 +72,16 @@ class DoctorService {
       req
     });
 
+    // Send invitation email with temporary credentials asynchronously
+    emailService.sendStaffInviteEmail({
+      to: doctor.email,
+      name: doctor.name,
+      role: 'Attending Physician (Doctor)',
+      department: doctor.department,
+      temporaryPassword: doctorData.password,
+      loginUrl: req.headers?.origin || process.env.CLIENT_URL
+    }).catch(err => console.error('Staff invite email error:', err.message));
+
     return doctor;
   }
 
@@ -95,6 +106,16 @@ class DoctorService {
       details: { name: receptionist.name, email: receptionist.email },
       req
     });
+
+    // Send invitation email with temporary credentials asynchronously
+    emailService.sendStaffInviteEmail({
+      to: receptionist.email,
+      name: receptionist.name,
+      role: 'Front Desk Receptionist',
+      department: 'Admissions & Lobby Operations',
+      temporaryPassword: receptionistData.password,
+      loginUrl: req.headers?.origin || process.env.CLIENT_URL
+    }).catch(err => console.error('Staff invite email error:', err.message));
 
     return receptionist;
   }
