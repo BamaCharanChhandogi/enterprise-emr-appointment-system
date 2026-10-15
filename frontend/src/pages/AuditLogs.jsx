@@ -119,13 +119,8 @@ const AuditLogs = () => {
       return (
         <div className="flex items-center space-x-2 text-slate-700">
           <span>
-            Authenticated staff account <strong className="text-slate-900 font-semibold">{d.email || log.userName}</strong>
+            Staff member signed in: <strong className="text-slate-900 font-semibold">{d.email || log.userName}</strong>
           </span>
-          {d.ip && (
-            <span className="text-[10px] font-mono text-slate-500 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md">
-              IP: {d.ip}
-            </span>
-          )}
         </div>
       );
     }
@@ -256,10 +251,10 @@ const AuditLogs = () => {
         <div>
           <h1 className="text-[17px] font-bold text-[#0f172a] flex items-center space-x-2 tracking-tight">
             <Shield className="w-5 h-5 text-[#1e40af]" />
-            <span>Compliance & Security Audit Trail</span>
+            <span>Hospital Clinical & Activity Logs</span>
           </h1>
           <p className="text-[12px] text-slate-500 mt-0.5">
-            Immutable chronological ledger of authentication, patient intake, consultations, and schedule governance
+            Chronological activity record of staff sign-ins, patient arrivals, appointments, and consultations
           </p>
         </div>
 

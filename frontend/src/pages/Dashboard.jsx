@@ -106,8 +106,8 @@ const Dashboard = () => {
           <h1 className="text-[17px] font-bold text-[#0f172a] tracking-tight">
             {user?.role === 'RECEPTIONIST' ? 'Front Desk & Lobby Operations' : 'Hospital Executive Overview'}
           </h1>
-          <p className="text-[12px] text-[#64748b] mt-0.5 font-mono">
-            OPERATOR: {user?.name?.toUpperCase()} • {user?.role === 'RECEPTIONIST' ? 'ADMISSIONS & LOBBY' : 'SYSTEM GOVERNANCE'}
+          <p className="text-[12px] text-slate-500 mt-0.5">
+            Welcome, {user?.name} • {user?.role === 'RECEPTIONIST' ? 'Admissions & Front Desk Lobby' : 'Hospital Executive Administration'}
           </p>
         </div>
 

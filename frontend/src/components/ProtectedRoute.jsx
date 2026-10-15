@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
           </div>
           <h2 className="text-xl font-bold text-slate-800 mb-2">Access Restricted</h2>
           <p className="text-slate-600 text-sm mb-6">
-            Your role (<span className="font-semibold">{user.role}</span>) does not have permission to access this module.
+            Your account ({user.role === 'SUPER_ADMIN' ? 'Hospital Administrator' : user.role === 'DOCTOR' ? 'Attending Physician' : 'Front Desk Receptionist'}) does not have clearance to access this department section.
           </p>
           <button
             onClick={() => window.history.back()}

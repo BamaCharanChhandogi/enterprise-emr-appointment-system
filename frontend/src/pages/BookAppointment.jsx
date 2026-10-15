@@ -152,8 +152,8 @@ const BookAppointment = () => {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
       <div className="pb-4 border-b border-[#e2e8f0] mb-5">
         <h1 className="text-lg font-bold text-[#0f172a]">Book Patient Appointment</h1>
-        <p className="text-[12px] text-[#64748b] mt-0.5">
-          Atomic slot reservation with automated collision prevention
+        <p className="text-[12px] text-slate-500 mt-0.5">
+          Schedule a clinic consultation and reserve an outpatient appointment slot
         </p>
       </div>
 

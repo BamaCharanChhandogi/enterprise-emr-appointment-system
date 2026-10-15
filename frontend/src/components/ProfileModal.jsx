@@ -57,7 +57,7 @@ const ProfileModal = ({ open, onOpenChange, user, onLogout }) => {
                   Hospital Identity & Credentials
                 </Dialog.Title>
                 <Dialog.Description className="text-xs text-slate-500">
-                  NexusEMR Authorized Personnel Profile
+                  NexusEMR Clinical Staff Profile
                 </Dialog.Description>
               </div>
             </div>
@@ -120,20 +120,21 @@ const ProfileModal = ({ open, onOpenChange, user, onLogout }) => {
 
             <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Operator System ID
+                Duty Shift Status
               </span>
-              <div className="font-mono text-slate-700 font-medium truncate">
-                {user.id || user._id || 'OP-1002'}
+              <div className="text-slate-800 font-semibold flex items-center space-x-1.5">
+                <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span>On Duty • Shift Active</span>
               </div>
             </div>
 
             <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Security & Encryption
+                Staff Clearance
               </span>
-              <div className="text-emerald-700 font-semibold flex items-center space-x-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>JWT RBAC Verified</span>
+              <div className="text-emerald-700 font-semibold flex items-center space-x-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Hospital Verified</span>
               </div>
             </div>
           </div>

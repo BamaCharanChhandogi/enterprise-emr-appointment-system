@@ -595,7 +595,7 @@ const AppointmentList = () => {
             <Dialog.Description className="text-[12px] text-slate-600 mt-2 mb-4 leading-relaxed">
               Are you sure you want to permanently delete appointment <b className="text-slate-900 font-mono">{appToPurge?.appointmentNumber}</b> for patient <b className="text-slate-900">{appToPurge?.patient?.name}</b>?
               <br /><br />
-              <span className="text-rose-600 font-semibold">Warning:</span> This is a permanent administrative hard deletion. This action cannot be undone and will be permanently recorded in the immutable audit log.
+              <span className="text-rose-600 font-semibold">Warning:</span> This will permanently remove the appointment record and cannot be undone.
             </Dialog.Description>
 
             <div className="mt-6 flex justify-end space-x-2.5">

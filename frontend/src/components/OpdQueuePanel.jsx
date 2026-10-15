@@ -217,7 +217,7 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
             Live OPD Queue & Triage
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            DATE: {today} • ATTENDING: {doctorName || user?.name}
+            Today: {today} • Attending: {doctorName || user?.name}
           </p>
         </div>
 

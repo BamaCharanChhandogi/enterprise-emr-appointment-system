@@ -52,9 +52,6 @@ const Login = () => {
         
         {/* Header */}
         <div className="mb-6">
-          <div className="w-9 h-9 rounded-xl bg-[#1e40af] text-white flex items-center justify-center font-bold text-lg mb-3.5 shadow-xs">
-            +
-          </div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">Staff Sign In</h1>
           <p className="text-[13px] text-slate-500 mt-1">Access clinical records and scheduling system</p>
         </div>
@@ -112,10 +109,10 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Demo Fast Switch */}
+        {/* Fast Role Sign In */}
         <div className="mt-8 pt-5 border-t border-slate-100">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block mb-2.5">
-            Quick Test Accounts:
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2.5">
+            Select Staff Role:
           </span>
           <div className="grid grid-cols-3 gap-2">
             <button
@@ -140,9 +137,6 @@ const Login = () => {
               Dr. House
             </button>
           </div>
-          <p className="text-[10px] text-slate-400 mt-2.5 text-center">
-            New staff onboarded by Super Admin can sign in with their assigned email and temporary password.
-          </p>
         </div>
 
       </div>
