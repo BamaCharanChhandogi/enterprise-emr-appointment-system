@@ -1,5 +1,7 @@
 # Enterprise EMR Appointment Management System (MERN Stack)
 
+> 🌐 **Live Production Deployment:** [https://enterprise-emr-appointment-system-liard.vercel.app/](https://enterprise-emr-appointment-system-liard.vercel.app/)
+
 A production-grade, real-time Appointment Management module designed for an Enterprise Electronic Medical Record (EMR) system. Built with **Node.js, Express, MongoDB/Mongoose, React.js, Tailwind CSS, and Socket.IO**.
 
 ---
