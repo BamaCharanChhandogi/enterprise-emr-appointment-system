@@ -1,24 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
-  Bell,
-  Volume2,
-  UserCheck,
-  Activity,
-  Clock,
-  ArrowRight,
-  CheckCircle2,
-  Stethoscope,
-  Sparkles,
   RefreshCw,
-  User,
-  Heart,
-  Thermometer,
-  FileText
+  Printer
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { getSocket } from '../services/socket';
+import PrintSlipModal from './PrintSlipModal';
 
 // Web Audio API Chime synthesizer for hospital announcement
 const playClinicalChime = () => {
@@ -118,6 +107,14 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
     };
   }, [doctorId, user]);
 
+  const [selectedAppForSlip, setSelectedAppForSlip] = useState(null);
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+
+  const handlePrintSlip = (app) => {
+    setSelectedAppForSlip(app);
+    setPrintModalOpen(true);
+  };
+
   // Arrived patients waiting in lobby
   const waitingQueue = appointments.filter((a) => a.status === 'Arrived');
   // Upcoming scheduled patients who haven't arrived yet
@@ -127,22 +124,25 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
 
   // Next patient in line
   const nextInLine = waitingQueue.length > 0 ? waitingQueue[0] : null;
+  const nextScheduled = scheduledQueue.length > 0 ? scheduledQueue[0] : null;
 
-  // Call patient action
+  // Call / Announce patient action
   const handleCallPatient = (patientApp) => {
     if (!patientApp) return;
 
     setCallingId(patientApp._id);
-    setActivePatient(patientApp);
-    setConsultNotes(patientApp.consultationNotes || '');
 
-    // Reset vitals for new consultation
-    setVitals({
-      bp: '120/80',
-      pulse: '74 bpm',
-      temp: '98.4°F',
-      spo2: '99%'
-    });
+    // Only Doctor enters active consultation note recording mode
+    if (user?.role === 'DOCTOR') {
+      setActivePatient(patientApp);
+      setConsultNotes(patientApp.consultationNotes || '');
+      setVitals({
+        bp: '120/80',
+        pulse: '74 bpm',
+        temp: '98.4°F',
+        spo2: '99%'
+      });
+    }
 
     playClinicalChime();
 
@@ -152,13 +152,17 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
       appointmentId: patientApp._id,
       appointmentNumber: patientApp.appointmentNumber,
       patientName: patientApp.patient?.name || 'Patient',
-      doctorName: patientApp.doctor?.name || doctorName || user.name,
+      doctorName: patientApp.doctor?.name || doctorName || user?.name,
       department: patientApp.department || department,
       cabin: 'Cabin 1',
       calledAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
 
-    toast.success(`Calling ${patientApp.patient?.name} (Token ${patientApp.appointmentNumber}) into Cabin`);
+    toast.success(
+      user?.role === 'RECEPTIONIST'
+        ? `Announced ${patientApp.patient?.name} (Token ${patientApp.appointmentNumber}) to proceed to ${doctorName || 'Doctor Cabin'}`
+        : `Calling ${patientApp.patient?.name} (Token ${patientApp.appointmentNumber}) into Cabin`
+    );
 
     setTimeout(() => {
       setCallingId(null);
@@ -242,29 +246,83 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
         </div>
       </div>
 
-      {/* Hero "Call Next Patient" Banner (Clean Medical Minimalist, No Neon Gradients) */}
+      {/* Hero "Next in Line" Banner (Role-tailored for Doctor & Receptionist) */}
       <div className="my-5">
         {nextInLine ? (
           <div className="bg-slate-50/80 border border-slate-200/90 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="text-xs font-bold uppercase tracking-wider text-[#1e40af]">
-                Next in Line • Waiting Outside
+                Next in Line • Waiting in Lobby
               </div>
               <div className="text-xl font-bold text-slate-900 mt-0.5">
                 {nextInLine.patient?.name}
               </div>
               <div className="text-xs text-slate-500 mt-0.5">
                 Token: <b>{nextInLine.appointmentNumber}</b> • Slot: {nextInLine.slotStartTime} - {nextInLine.slotEndTime}
+                {nextInLine.patient?.phone && ` • Phone: ${nextInLine.patient.phone}`}
               </div>
             </div>
 
-            <button
-              onClick={() => handleCallPatient(nextInLine)}
-              disabled={callingId === nextInLine._id}
-              className="btn-primary rounded-full px-6 py-2.5 text-xs font-bold shadow-xs cursor-pointer"
-            >
-              <span>{callingId === nextInLine._id ? 'Announcing...' : 'Call Next Patient into Cabin'}</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => handlePrintSlip(nextInLine)}
+                title="Print OPD Token Slip"
+                className="btn-secondary rounded-full px-4 py-2.5 text-xs font-semibold flex items-center space-x-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Slip</span>
+              </button>
+
+              <button
+                onClick={() => handleCallPatient(nextInLine)}
+                disabled={callingId === nextInLine._id}
+                className="btn-primary rounded-full px-6 py-2.5 text-xs font-bold shadow-xs cursor-pointer"
+              >
+                <span>
+                  {callingId === nextInLine._id
+                    ? 'Announcing...'
+                    : user?.role === 'RECEPTIONIST'
+                    ? '📢 Announce to Cabin'
+                    : 'Call Patient into Cabin'}
+                </span>
+              </button>
+            </div>
+          </div>
+        ) : nextScheduled && (user?.role === 'RECEPTIONIST' || user?.role === 'SUPER_ADMIN') ? (
+          <div className="bg-blue-50/40 border border-blue-200/80 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-[#1e40af]">
+                Next Scheduled Arrival • Front Desk Intake
+              </div>
+              <div className="text-xl font-bold text-slate-900 mt-0.5">
+                {nextScheduled.patient?.name}
+              </div>
+              <div className="text-xs text-slate-500 mt-0.5">
+                Slot: <b>{nextScheduled.slotStartTime} - {nextScheduled.slotEndTime}</b> • Ref: {nextScheduled.appointmentNumber}
+                {nextScheduled.patient?.phone && ` • Phone: ${nextScheduled.patient.phone}`}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => handlePrintSlip(nextScheduled)}
+                title="Print Token Slip"
+                className="btn-secondary rounded-full px-4 py-2.5 text-xs font-semibold flex items-center space-x-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Slip</span>
+              </button>
+
+              <button
+                onClick={() => handleMarkArrived(nextScheduled._id)}
+                disabled={actionLoading}
+                className="btn-primary rounded-full px-6 py-2.5 text-xs font-bold shadow-xs cursor-pointer"
+              >
+                <span>{actionLoading ? 'Checking In...' : 'Check In Patient (Mark Arrived)'}</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-center text-slate-500 text-xs">
@@ -273,8 +331,8 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
         )}
       </div>
 
-      {/* Active Consultation Cabin Card (When a patient is called into Cabin) */}
-      {activePatient && (
+      {/* Active Consultation Cabin Card (Physician Only) */}
+      {user?.role === 'DOCTOR' && activePatient && (
         <div className="bg-white border-2 border-[#2555ff]/40 rounded-xl p-5 mb-5 shadow-sm animate-in fade-in">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
             <div className="flex items-center space-x-2">
@@ -472,14 +530,25 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleCallPatient(app)}
-                    disabled={callingId === app._id}
-                    title="Call patient into cabin"
-                    className="btn-primary rounded-full px-4 py-1.5 text-xs font-semibold"
-                  >
-                    Call
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePrintSlip(app)}
+                      title="Print Token Slip"
+                      className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      onClick={() => handleCallPatient(app)}
+                      disabled={callingId === app._id}
+                      title={user?.role === 'RECEPTIONIST' ? 'Announce patient to proceed to cabin' : 'Call patient into cabin'}
+                      className="btn-primary rounded-full px-4 py-1.5 text-xs font-semibold cursor-pointer"
+                    >
+                      {user?.role === 'RECEPTIONIST' ? 'Announce' : 'Call'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -515,17 +584,27 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
                     </div>
                   </div>
 
-                  {/* 1-Click Intake Check-in button */}
-                  {(user?.role === 'SUPER_ADMIN' || user?.role === 'RECEPTIONIST') && (
+                  <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handleMarkArrived(app._id)}
-                      disabled={actionLoading}
-                      title="Patient arrived at front desk"
-                      className="btn-secondary rounded-full px-4 py-1.5 text-xs font-semibold"
+                      type="button"
+                      onClick={() => handlePrintSlip(app)}
+                      title="Print Token Slip"
+                      className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition cursor-pointer"
                     >
-                      Check In
+                      <Printer className="w-3.5 h-3.5" />
                     </button>
-                  )}
+
+                    {(user?.role === 'SUPER_ADMIN' || user?.role === 'RECEPTIONIST') && (
+                      <button
+                        onClick={() => handleMarkArrived(app._id)}
+                        disabled={actionLoading}
+                        title="Patient arrived at front desk"
+                        className="btn-secondary rounded-full px-4 py-1.5 text-xs font-semibold cursor-pointer"
+                      >
+                        Check In
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
 
@@ -538,6 +617,13 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
           )}
         </div>
       </div>
+
+      {/* Printable OPD Token Slip Modal */}
+      <PrintSlipModal
+        open={printModalOpen}
+        onOpenChange={setPrintModalOpen}
+        appointment={selectedAppForSlip}
+      />
     </div>
   );
 };
