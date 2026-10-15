@@ -158,12 +158,6 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
       calledAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
 
-    toast.success(
-      user?.role === 'RECEPTIONIST'
-        ? `Announced ${patientApp.patient?.name} (Token ${patientApp.appointmentNumber}) to proceed to ${doctorName || 'Doctor Cabin'}`
-        : `Calling ${patientApp.patient?.name} (Token ${patientApp.appointmentNumber}) into Cabin`
-    );
-
     setTimeout(() => {
       setCallingId(null);
     }, 1500);
