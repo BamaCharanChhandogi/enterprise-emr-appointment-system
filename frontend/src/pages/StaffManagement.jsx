@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import api from '../services/api';
-import { Plus, UserPlus, Save, CheckCircle, Eye, EyeOff, Copy, Key, ShieldCheck, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Plus, UserPlus, Save, CheckCircle, Eye, EyeOff, Copy, Key, ShieldCheck, X, Trash2 } from 'lucide-react';
 
 const generateSecurePassword = () => {
   const letters = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -16,11 +17,17 @@ const generateSecurePassword = () => {
 };
 
 const StaffManagement = () => {
+  const { user } = useAuth();
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Doctor Deletion Modal (Super Admin)
+  const [doctorToDelete, setDoctorToDelete] = useState(null);
+  const [showDeleteDoctorModal, setShowDeleteDoctorModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Doctor Form Modal
   const [showDoctorModal, setShowDoctorModal] = useState(false);
@@ -46,6 +53,33 @@ const StaffManagement = () => {
   // Post-Creation Credentials Success Modal
   const [createdStaffCredentials, setCreatedStaffCredentials] = useState(null);
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+
+  const handleDeleteDoctor = async () => {
+    if (!doctorToDelete) return;
+    setDeleteLoading(true);
+    try {
+      const res = await api.delete(`/doctors/${doctorToDelete._id}`);
+      if (res.data?.success) {
+        toast.success(res.data.message || `Dr. ${doctorToDelete.name} removed successfully`);
+        setShowDeleteDoctorModal(false);
+        const remainingDocs = doctors.filter((doc) => doc._id !== doctorToDelete._id);
+        setDoctors(remainingDocs);
+        if (selectedDoctor?._id === doctorToDelete._id) {
+          if (remainingDocs.length > 0) {
+            selectDoctor(remainingDocs[0]);
+          } else {
+            setSelectedDoctor(null);
+            setSchedule([]);
+          }
+        }
+        setDoctorToDelete(null);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete doctor');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const fetchDoctors = async () => {
     try {
@@ -242,14 +276,30 @@ Temporary Password: ${createdStaffCredentials.password}
               <div
                 key={d._id}
                 onClick={() => selectDoctor(d)}
-                className={`p-3 rounded-xl cursor-pointer transition text-[12px] ${
+                className={`p-3 rounded-xl cursor-pointer transition text-[12px] flex items-center justify-between group ${
                   selectedDoctor?._id === d._id
                     ? 'bg-[#1e40af]/10 border border-[#1e40af]/30 text-slate-900 shadow-2xs font-semibold'
                     : 'hover:bg-slate-50 border border-transparent text-slate-600'
                 }`}
               >
-                <div className="font-semibold text-slate-900">{d.name}</div>
-                <div className="text-[11px] text-[#1e40af] mt-0.5 font-medium">{d.department}</div>
+                <div className="min-w-0 pr-2">
+                  <div className="font-semibold text-slate-900 truncate">{d.name}</div>
+                  <div className="text-[11px] text-[#1e40af] mt-0.5 font-medium truncate">{d.department}</div>
+                </div>
+                {user?.role === 'SUPER_ADMIN' && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDoctorToDelete(d);
+                      setShowDeleteDoctorModal(true);
+                    }}
+                    title="Remove Doctor (Super Admin)"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition opacity-0 group-hover:opacity-100 cursor-pointer shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -679,6 +729,56 @@ Temporary Password: ${createdStaffCredentials.password}
                 className="btn-primary rounded-full px-6 py-2 text-xs font-bold cursor-pointer"
               >
                 Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Doctor Confirmation Modal (Super Admin) */}
+      {showDeleteDoctorModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-rose-950 tracking-tight">Remove Physician</h3>
+                <p className="text-[12px] text-slate-500">Super Admin Administrative Action</p>
+              </div>
+            </div>
+
+            <p className="text-[13px] text-slate-600 leading-relaxed mb-4">
+              Are you sure you want to remove <b className="text-slate-900">{doctorToDelete?.name}</b> ({doctorToDelete?.department}) from the active hospital directory?
+            </p>
+
+            <div className="p-3.5 bg-rose-50/70 border border-rose-200/80 rounded-2xl mb-5 text-[11px] text-rose-900 space-y-1">
+              <p className="font-semibold text-rose-950">Cascading Actions:</p>
+              <p>• Weekly shift schedule will be permanently deleted.</p>
+              <p>• All active upcoming appointments with Dr. {doctorToDelete?.name} will be auto-cancelled.</p>
+              <p>• An immutable security event will be logged in Clinical Audit Logs.</p>
+            </div>
+
+            <div className="flex justify-end space-x-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteDoctorModal(false);
+                  setDoctorToDelete(null);
+                }}
+                disabled={deleteLoading}
+                className="btn-secondary text-[12px] py-2 px-4 rounded-full cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteDoctor}
+                disabled={deleteLoading}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold rounded-full transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center space-x-1.5"
+              >
+                <span>{deleteLoading ? 'Removing...' : 'Confirm Removal'}</span>
               </button>
             </div>
           </div>

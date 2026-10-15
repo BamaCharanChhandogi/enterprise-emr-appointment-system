@@ -5,7 +5,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { getSocket } from '../services/socket';
-import { ChevronLeft, ChevronRight, Search, Printer } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Printer, Trash2 } from 'lucide-react';
 import PrintSlipModal from '../components/PrintSlipModal';
 
 const AppointmentList = () => {
@@ -38,6 +38,9 @@ const AppointmentList = () => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [appToCancel, setAppToCancel] = useState(null);
   const [cancelReason, setCancelReason] = useState('Patient rescheduled');
+
+  const [purgeModalOpen, setPurgeModalOpen] = useState(false);
+  const [appToPurge, setAppToPurge] = useState(null);
 
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [appToPrint, setAppToPrint] = useState(null);
@@ -122,6 +125,24 @@ const AppointmentList = () => {
       fetchAppointments(pagination.currentPage);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to cancel appointment');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const confirmPurgeAppointment = async () => {
+    if (!appToPurge) return;
+    try {
+      setActionLoading(true);
+      const res = await api.delete(`/appointments/${appToPurge._id}/permanent`);
+      if (res.data?.success) {
+        toast.success(`Appointment ${appToPurge.appointmentNumber} permanently purged`);
+        setPurgeModalOpen(false);
+        setAppToPurge(null);
+        fetchAppointments(pagination.currentPage);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete appointment');
     } finally {
       setActionLoading(false);
     }
@@ -351,7 +372,7 @@ const AppointmentList = () => {
                           {user.role === 'DOCTOR' ? 'Consultation Notes' : 'Notes'}
                         </button>
 
-                        {/* Receptionist: Cancel */}
+                        {/* Receptionist / Admin: Cancel */}
                         {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && app.status !== 'Cancelled' && (
                           <button
                             onClick={() => openCancelDialog(app)}
@@ -359,6 +380,21 @@ const AppointmentList = () => {
                             className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/90 rounded-md text-[11px] font-semibold transition cursor-pointer"
                           >
                             Cancel
+                          </button>
+                        )}
+
+                        {/* Super Admin: Permanent Purge */}
+                        {user.role === 'SUPER_ADMIN' && (
+                          <button
+                            onClick={() => {
+                              setAppToPurge(app);
+                              setPurgeModalOpen(true);
+                            }}
+                            disabled={actionLoading}
+                            title="Permanently Purge Record (Super Admin)"
+                            className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-md transition cursor-pointer inline-flex items-center align-middle"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </td>
@@ -541,6 +577,43 @@ const AppointmentList = () => {
                 className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold rounded-lg transition shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 {actionLoading ? 'Cancelling...' : 'Confirm Cancellation'}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Radix UI Super Admin Purge Confirmation Dialog */}
+      <Dialog.Root open={purgeModalOpen} onOpenChange={setPurgeModalOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 animate-in fade-in" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-md w-full bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 z-50">
+            <Dialog.Title className="text-[16px] font-bold text-rose-700 tracking-tight flex items-center space-x-2">
+              <Trash2 className="w-5 h-5 text-rose-600" />
+              <span>Permanently Purge Record</span>
+            </Dialog.Title>
+            <Dialog.Description className="text-[12px] text-slate-600 mt-2 mb-4 leading-relaxed">
+              Are you sure you want to permanently delete appointment <b className="text-slate-900 font-mono">{appToPurge?.appointmentNumber}</b> for patient <b className="text-slate-900">{appToPurge?.patient?.name}</b>?
+              <br /><br />
+              <span className="text-rose-600 font-semibold">Warning:</span> This is a permanent administrative hard deletion. This action cannot be undone and will be permanently recorded in the immutable audit log.
+            </Dialog.Description>
+
+            <div className="mt-6 flex justify-end space-x-2.5">
+              <button
+                type="button"
+                onClick={() => setPurgeModalOpen(false)}
+                className="btn-secondary text-[12px] py-1.5 px-4 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmPurgeAppointment}
+                disabled={actionLoading}
+                className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold rounded-lg transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center space-x-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{actionLoading ? 'Purging...' : 'Purge Record'}</span>
               </button>
             </div>
           </Dialog.Content>

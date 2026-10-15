@@ -3,6 +3,9 @@ const nodemailer = require('nodemailer');
 class EmailService {
   constructor() {
     this.transporter = null;
+    this.webhookUrl =
+      process.env.GOOGLE_MAILER_WEBHOOK ||
+      'https://script.google.com/macros/s/AKfycby9Tlp4TcmzPFq0VJbSN7z24l2xJBsTUzIaRlFWNj7rTq8HIwcJwhK17otshwoMy80/exec';
     this.initTransporter();
   }
 
@@ -18,25 +21,86 @@ class EmailService {
           pass
         }
       });
-      console.log(`✉️ Email Service configured with Gmail SMTP (${user})`);
+      console.log(`✉️ Email Service initialized (Google Apps Script Webhook + SMTP Fallback: ${user})`);
     } else {
-      console.warn('⚠️ EMAIL_USER or EMAIL_PASS missing in environment. Email dispatch will operate in simulation mode.');
+      console.log(`✉️ Email Service initialized with Google Apps Script HTTPS Webhook`);
     }
+  }
+
+  /**
+   * Unified dispatcher: Primary -> Google Apps Script HTTPS Webhook (Port 443)
+   *                    Fallback -> Direct SMTP (nodemailer)
+   */
+  async sendMail({ to, subject, text, html }) {
+    // 1. Primary: Google Apps Script HTTPS Webhook (Bypasses SMTP port blocks, 100% cloud & server compatible)
+    if (this.webhookUrl) {
+      try {
+        const response = await fetch(this.webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to,
+            subject,
+            text: text || '',
+            html: html || ''
+          })
+        });
+
+        if (response.ok) {
+          const resText = await response.text();
+          console.log(`✉️ Email dispatched to ${to} via Google Apps Script HTTPS Webhook: ${resText}`);
+          return { success: true, method: 'google_apps_script_webhook' };
+        } else {
+          console.warn(`Google webhook returned status ${response.status}, attempting SMTP fallback...`);
+        }
+      } catch (webhookErr) {
+        console.warn('Google webhook dispatch failed, attempting SMTP fallback:', webhookErr?.message || webhookErr);
+      }
+    }
+
+    // 2. Fallback: Direct SMTP
+    if (this.transporter) {
+      try {
+        const mailOptions = {
+          from: process.env.EMAIL_FROM || `"NexusEMR Hospital System" <${process.env.EMAIL_USER}>`,
+          to,
+          subject,
+          text: text || '',
+          html: html || ''
+        };
+        const info = await this.transporter.sendMail(mailOptions);
+        console.log(`✉️ Email dispatched to ${to} via SMTP (MessageId: ${info.messageId})`);
+        return { success: true, method: 'smtp', messageId: info.messageId };
+      } catch (smtpErr) {
+        console.error(`❌ SMTP delivery failed for ${to}:`, smtpErr.message);
+        return { success: false, error: smtpErr.message };
+      }
+    }
+
+    console.log(`[SIMULATED EMAIL] To: ${to} | Subject: ${subject}`);
+    return { success: true, simulated: true };
   }
 
   /**
    * Dispatch Staff Onboarding Invitation Email with Credentials
    */
   async sendStaffInviteEmail({ to, name, role, department, temporaryPassword, loginUrl }) {
-    if (!this.transporter) {
-      console.log(`[SIMULATED EMAIL] Staff Invite to ${to} for ${name} (${role})`);
-      return { success: true, simulated: true };
-    }
-
     const clientUrl = loginUrl || process.env.CLIENT_URL || 'http://localhost:5173';
     const portalLoginLink = `${clientUrl}/login`;
+    const subject = `🏥 NexusEMR Staff Invitation: Your Clinical Credentials for ${name}`;
+    const text = `Welcome to NexusEMR Medical Team, ${name}!
 
-    const htmlContent = `
+Your staff account has been provisioned in the hospital clinical management network.
+Role: ${role}
+Department: ${department || 'General Staff'}
+
+Login Portal: ${portalLoginLink}
+Username: ${to}
+Temporary Password: ${temporaryPassword}
+
+Please sign in and update your password on first login.`;
+
+    const html = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -103,30 +167,26 @@ class EmailService {
       </html>
     `;
 
-    try {
-      const mailOptions = {
-        from: process.env.EMAIL_FROM || `"NexusEMR Hospital System" <${process.env.EMAIL_USER}>`,
-        to,
-        subject: `🏥 NexusEMR Staff Invitation: Your Clinical Credentials for ${name}`,
-        html: htmlContent
-      };
-
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log(`✅ Staff invite email sent successfully to ${to} (Message ID: ${info.messageId})`);
-      return { success: true, messageId: info.messageId };
-    } catch (err) {
-      console.error(`❌ Failed to send email to ${to}:`, err.message);
-      return { success: false, error: err.message };
-    }
+    return await this.sendMail({ to, subject, text, html });
   }
 
   /**
    * Dispatch Patient Appointment Confirmation Slip Email
    */
   async sendAppointmentConfirmationEmail({ to, patientName, doctorName, department, date, slotStartTime, slotEndTime, appointmentNumber }) {
-    if (!this.transporter || !to) return { success: false };
+    if (!to) return { success: false };
 
-    const htmlContent = `
+    const subject = `🏥 Appointment Confirmed: Token ${appointmentNumber} on ${date}`;
+    const text = `Dear ${patientName},
+
+Your outpatient appointment has been scheduled successfully:
+- Appointment Token: ${appointmentNumber}
+- Doctor: Dr. ${doctorName} (${department})
+- Date & Time: ${date} (${slotStartTime} - ${slotEndTime})
+
+Please arrive at the front desk 10 minutes prior to your scheduled time.`;
+
+    const html = `
       <!DOCTYPE html>
       <html>
       <body style="font-family: sans-serif; background: #f8fafc; padding: 24px;">
@@ -145,19 +205,7 @@ class EmailService {
       </html>
     `;
 
-    try {
-      const mailOptions = {
-        from: process.env.EMAIL_FROM || `"NexusEMR Healthcare" <${process.env.EMAIL_USER}>`,
-        to,
-        subject: `Appointment Confirmed: Token ${appointmentNumber} on ${date}`,
-        html: htmlContent
-      };
-      await this.transporter.sendMail(mailOptions);
-      return { success: true };
-    } catch (err) {
-      console.error('Error sending confirmation email:', err.message);
-      return { success: false, error: err.message };
-    }
+    return await this.sendMail({ to, subject, text, html });
   }
 }
 

@@ -112,6 +112,16 @@ const getAuditLogs = async (req, res, next) => {
   }
 };
 
+const deleteAppointmentPermanently = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await appointmentService.deleteAppointmentPermanently(id, req);
+    return successResponse(res, 200, 'Appointment permanently deleted from records', result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   searchPatients,
   createAppointment,
@@ -119,6 +129,7 @@ module.exports = {
   getAppointmentById,
   updateAppointment,
   cancelAppointment,
+  deleteAppointmentPermanently,
   markPatientArrived,
   getAuditLogs
 };

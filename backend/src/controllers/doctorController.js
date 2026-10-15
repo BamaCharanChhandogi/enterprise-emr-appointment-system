@@ -60,10 +60,21 @@ const getAvailableSlots = async (req, res, next) => {
   }
 };
 
+const deleteDoctor = async (req, res, next) => {
+  try {
+    const { doctorId } = req.params;
+    const result = await doctorService.deleteDoctor(doctorId, req);
+    return successResponse(res, 200, 'Doctor removed from hospital directory', result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllDoctors,
   createDoctor,
   createReceptionist,
+  deleteDoctor,
   getDoctorSchedule,
   updateDoctorSchedule,
   getAvailableSlots

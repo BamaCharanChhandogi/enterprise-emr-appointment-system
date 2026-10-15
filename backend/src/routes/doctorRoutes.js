@@ -16,4 +16,7 @@ router.post('/receptionists', authenticate, authorize('SUPER_ADMIN'), validate(c
 router.get('/:doctorId/schedule', authenticate, doctorController.getDoctorSchedule);
 router.put('/:doctorId/schedule', authenticate, authorize('SUPER_ADMIN'), validate(scheduleSchema), doctorController.updateDoctorSchedule);
 
+// Super Admin only: delete/deactivate doctor & cascade cancel active slots
+router.delete('/:doctorId', authenticate, authorize('SUPER_ADMIN'), doctorController.deleteDoctor);
+
 module.exports = router;

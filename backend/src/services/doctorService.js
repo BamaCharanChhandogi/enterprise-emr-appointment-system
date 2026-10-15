@@ -120,6 +120,55 @@ class DoctorService {
     return receptionist;
   }
 
+  async deleteDoctor(doctorId, req) {
+    const doctor = await User.findOne({ _id: doctorId, role: 'DOCTOR' });
+    if (!doctor) {
+      throw new AppError('Doctor not found', 404);
+    }
+
+    // Cancel any active future/today appointments for this doctor
+    const today = new Date().toISOString().split('T')[0];
+    const activeAppointments = await Appointment.find({
+      doctor: doctorId,
+      date: { $gte: today },
+      status: { $in: ['Scheduled', 'Arrived'] }
+    });
+
+    for (const app of activeAppointments) {
+      app.status = 'Cancelled';
+      app.cancelledReason = `Physician removed from staff directory by Super Admin (${req.user.name})`;
+      await app.save();
+    }
+
+    // Remove Doctor Schedule
+    await DoctorSchedule.deleteOne({ doctor: doctorId });
+
+    // Delete User record
+    await User.findByIdAndDelete(doctorId);
+
+    // Record compliance audit log
+    await logAction({
+      user: req.user._id,
+      userName: req.user.name,
+      role: req.user.role,
+      action: 'DOCTOR_DELETED',
+      entity: 'User',
+      entityId: doctorId.toString(),
+      details: {
+        doctorName: doctor.name,
+        department: doctor.department,
+        cancelledUpcomingCount: activeAppointments.length
+      },
+      req
+    });
+
+    return {
+      deletedDoctorId: doctorId,
+      doctorName: doctor.name,
+      cancelledAppointments: activeAppointments.length
+    };
+  }
+
   async getDoctorSchedule(doctorId) {
     let schedule = await DoctorSchedule.findOne({ doctor: doctorId }).populate('doctor', 'name department');
     if (!schedule) {

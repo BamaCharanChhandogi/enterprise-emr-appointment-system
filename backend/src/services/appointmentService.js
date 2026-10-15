@@ -457,6 +457,43 @@ class AppointmentService {
       }
     };
   }
+
+  /**
+   * Super Admin Only: Permanently Purge / Delete Appointment Record
+   */
+  async deleteAppointmentPermanently(id, req) {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      throw new AppError('Forbidden: Only Super Administrators can permanently delete appointment records', 403);
+    }
+
+    const appointment = await Appointment.findById(id).populate('patient', 'name').populate('doctor', 'name');
+    if (!appointment) {
+      throw new AppError('Appointment not found', 404);
+    }
+
+    await Appointment.findByIdAndDelete(id);
+
+    await logAction({
+      user: req.user._id,
+      userName: req.user.name,
+      role: req.user.role,
+      action: 'APPOINTMENT_DELETED',
+      entity: 'Appointment',
+      entityId: id.toString(),
+      details: {
+        appointmentNumber: appointment.appointmentNumber,
+        patient: appointment.patient?.name,
+        doctor: appointment.doctor?.name,
+        date: appointment.date,
+        slot: appointment.slotStartTime
+      },
+      req
+    });
+
+    emitAppointmentUpdate('DELETED', { _id: id, appointmentNumber: appointment.appointmentNumber });
+
+    return { id, appointmentNumber: appointment.appointmentNumber };
+  }
 }
 
 module.exports = new AppointmentService();

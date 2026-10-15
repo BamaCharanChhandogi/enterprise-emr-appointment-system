@@ -46,6 +46,14 @@ router.delete(
   appointmentController.cancelAppointment
 );
 
+// Super Admin Only: Permanently delete/purge appointment record
+router.delete(
+  '/:id/permanent',
+  authenticate,
+  authorize('SUPER_ADMIN'),
+  appointmentController.deleteAppointmentPermanently
+);
+
 router.post(
   '/:id/arrive',
   authenticate,
