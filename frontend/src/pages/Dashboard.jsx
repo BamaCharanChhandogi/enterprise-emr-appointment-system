@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { getSocket } from '../services/socket';
+import OpdQueuePanel from '../components/OpdQueuePanel';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -15,6 +16,8 @@ const Dashboard = () => {
   });
   const [recentAppointments, setRecentAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
 
   const fetchDashboardData = async () => {
     try {
@@ -49,6 +52,16 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
 
+    if (user?.role !== 'DOCTOR') {
+      api.get('/doctors').then((res) => {
+        if (res.data?.success) {
+          const docs = res.data.data.doctors || [];
+          setDoctors(docs);
+          if (docs.length > 0) setSelectedDoctorId(docs[0]._id);
+        }
+      }).catch((err) => console.error(err));
+    }
+
     const socket = getSocket();
     const handleLiveEvent = () => fetchDashboardData();
     socket.on('appointment_event', handleLiveEvent);
@@ -56,7 +69,12 @@ const Dashboard = () => {
     return () => {
       socket.off('appointment_event', handleLiveEvent);
     };
-  }, []);
+  }, [user]);
+
+  const currentDoc = doctors.find((d) => d._id === selectedDoctorId);
+  const activeDocId = user?.role === 'DOCTOR' ? user.id : selectedDoctorId;
+  const activeDocName = user?.role === 'DOCTOR' ? user.name : currentDoc?.name;
+  const activeDocDept = user?.role === 'DOCTOR' ? user.department : currentDoc?.department;
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -164,6 +182,35 @@ const Dashboard = () => {
           </span>
         </div>
       </div>
+
+      {/* For Receptionist/Admin: Doctor Filter Tabs */}
+      {user?.role !== 'DOCTOR' && doctors.length > 0 && (
+        <div className="flex items-center space-x-2 mb-3 overflow-x-auto pb-1 text-[12px]">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1 flex-shrink-0">
+            Physician Queue:
+          </span>
+          {doctors.map((doc) => (
+            <button
+              key={doc._id}
+              onClick={() => setSelectedDoctorId(doc._id)}
+              className={`px-3 py-1 rounded-lg font-medium transition cursor-pointer flex-shrink-0 ${
+                selectedDoctorId === doc._id
+                  ? 'bg-[#2555ff] text-white shadow-2xs'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {doc.name} ({doc.department})
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Live OPD Consultation & Lobby Queue Panel */}
+      <OpdQueuePanel
+        doctorId={activeDocId}
+        doctorName={activeDocName}
+        department={activeDocDept}
+      />
 
       {/* Clean Tabular Stream */}
       <div className="elite-card overflow-hidden">

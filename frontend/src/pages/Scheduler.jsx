@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { getSocket } from '../services/socket';
+import OpdQueuePanel from '../components/OpdQueuePanel';
+import { Bell } from 'lucide-react';
 
 const Scheduler = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const isDoctor = user?.role === 'DOCTOR';
+  const [showOpdQueue, setShowOpdQueue] = useState(isDoctor);
 
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState(isDoctor ? user?.id : '');
@@ -124,11 +127,32 @@ const Scheduler = () => {
               : 'Filter physician schedules and reserve open consultation slots'}
           </p>
         </div>
-        <div className="text-[12px] text-[#64748b] font-medium flex items-center space-x-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>Live Availability</span>
+
+        <div className="flex items-center space-x-2.5">
+          {isDoctor && (
+            <button
+              onClick={() => setShowOpdQueue(!showOpdQueue)}
+              className="btn-secondary py-1.5 px-3 text-[12px] flex items-center space-x-1.5 cursor-pointer"
+            >
+              <Bell className="w-3.5 h-3.5 text-[#2555ff]" />
+              <span>{showOpdQueue ? 'Hide OPD Queue' : 'Live OPD Queue'}</span>
+            </button>
+          )}
+          <div className="text-[12px] text-[#64748b] font-medium flex items-center space-x-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Live Availability</span>
+          </div>
         </div>
       </div>
+
+      {/* Doctor Live OPD Queue & Cabin Console */}
+      {showOpdQueue && (
+        <OpdQueuePanel
+          doctorId={isDoctor ? user?.id : selectedDoctorId}
+          doctorName={isDoctor ? user?.name : doctors.find((d) => d._id === selectedDoctorId)?.name}
+          department={isDoctor ? user?.department : doctors.find((d) => d._id === selectedDoctorId)?.department}
+        />
+      )}
 
       {/* Filter Control Bar - Hidden dropdowns for Doctor to strictly protect RBAC */}
       <div className="elite-card p-4 mb-4">

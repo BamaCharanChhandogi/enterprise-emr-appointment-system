@@ -78,7 +78,8 @@ const updateAppointmentSchema = z.object({
   body: z.object({
     purpose: z.string().optional(),
     notes: z.string().optional(),
-    consultationNotes: z.string().optional()
+    consultationNotes: z.string().optional(),
+    status: z.enum(['Scheduled', 'Arrived', 'Completed', 'Cancelled']).optional()
   })
 });
 

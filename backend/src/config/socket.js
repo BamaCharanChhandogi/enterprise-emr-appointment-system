@@ -30,6 +30,12 @@ const initSocket = (server, corsOrigin = '*') => {
       }
     });
 
+    // Doctor calls next patient from lobby into cabin
+    socket.on('call_patient', (data) => {
+      console.log(`📢 Patient called: ${data?.patientName} (Token ${data?.appointmentNumber})`);
+      ioInstance.emit('patient_called', data);
+    });
+
     socket.on('disconnect', () => {
       console.log(`🔌 Client disconnected from WebSocket: ${socket.id}`);
     });
