@@ -7,6 +7,21 @@ import OpdQueuePanel from '../components/OpdQueuePanel';
 import DoctorClinic from './DoctorClinic';
 import { Bell } from 'lucide-react';
 
+// Helper to evaluate whether a time slot has elapsed based on client local clock
+const isPastSlotTime = (slotTime, dateStr) => {
+  if (!slotTime || !dateStr) return false;
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  
+  if (dateStr < todayStr) return true;
+  if (dateStr > todayStr) return false;
+
+  const [hours, minutes] = slotTime.split(':').map(Number);
+  const slotMinutes = (hours * 60) + (minutes || 0);
+  const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+  return slotMinutes <= currentMinutes;
+};
+
 const Scheduler = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -58,10 +73,16 @@ const Scheduler = () => {
     setError('');
 
     try {
+      const now = new Date();
+      const clientDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const clientMinutes = now.getHours() * 60 + now.getMinutes();
+
       const res = await api.get('/slots', {
         params: {
           doctorId: doctorIdToFetch,
-          date: selectedDate
+          date: selectedDate,
+          clientDate,
+          clientMinutes
         }
       });
       if (res.data?.success) {
@@ -104,7 +125,8 @@ const Scheduler = () => {
   const handleBookSlotClick = (slot) => {
     // Doctors cannot book slots directly (that is receptionist/admin's role)
     if (isDoctor) return;
-    if (!slot.isAvailable) return;
+    const isPast = slot.isPastTime || isPastSlotTime(slot.startTime, selectedDate);
+    if (!slot.isAvailable || slot.isBooked || isPast) return;
 
     const doc = doctors.find(d => d._id === selectedDoctorId);
     navigate('/book', {
@@ -252,34 +274,37 @@ const Scheduler = () => {
       </div>
 
       {/* Status Summary Bar */}
-      {slotData && (
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200/90 px-5 py-3 rounded-xl mb-5 text-[12px] shadow-2xs">
-          <div className="flex items-center space-x-2 text-[#0f172a]">
-            <span className="font-semibold text-slate-800">{slotData.day}, {slotData.date}</span>
-            <span className="text-slate-300">•</span>
-            <span>Total Slots: <b className="text-slate-800">{slotData.totalSlots}</b></span>
-            <span className="text-slate-300">•</span>
-            <span className="text-emerald-700 font-semibold">{slotData.availableSlotsCount} Open</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-[#2555ff] font-semibold">{slotData.bookedSlotsCount} Booked</span>
-          </div>
+      {slotData && (() => {
+        const openSlotsCount = slotData.slots?.filter(s => !s.isBooked && !(s.isPastTime || isPastSlotTime(s.startTime, selectedDate))).length ?? slotData.availableSlotsCount;
+        return (
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200/90 px-5 py-3 rounded-xl mb-5 text-[12px] shadow-2xs">
+            <div className="flex items-center space-x-2 text-[#0f172a]">
+              <span className="font-semibold text-slate-800">{slotData.day}, {slotData.date}</span>
+              <span className="text-slate-300">•</span>
+              <span>Total Slots: <b className="text-slate-800">{slotData.totalSlots}</b></span>
+              <span className="text-slate-300">•</span>
+              <span className="text-emerald-700 font-semibold">{openSlotsCount} Open</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-[#2555ff] font-semibold">{slotData.bookedSlotsCount} Booked</span>
+            </div>
 
-          <div className="flex items-center space-x-3 text-slate-500 text-[11px]">
-            <span className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span>Available</span>
-            </span>
-            <span className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#2555ff]"></span>
-              <span>Booked</span>
-            </span>
-            <span className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
-              <span>Elapsed</span>
-            </span>
+            <div className="flex items-center space-x-3 text-slate-500 text-[11px]">
+              <span className="flex items-center space-x-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span>Available</span>
+              </span>
+              <span className="flex items-center space-x-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#2555ff]"></span>
+                <span>Booked</span>
+              </span>
+              <span className="flex items-center space-x-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                <span>Elapsed</span>
+              </span>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Slot Grid */}
       <div className="elite-card p-6">
@@ -296,23 +321,26 @@ const Scheduler = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5">
             {slotData?.slots.map((slot, index) => {
+              const isPast = slot.isPastTime || isPastSlotTime(slot.startTime, selectedDate);
+              const isBooked = slot.isBooked;
+
               let style = isDoctor
                 ? "border-[#2555ff]/25 bg-[#2555ff]/5 text-[#2555ff] cursor-default"
                 : "border-[#2555ff]/25 bg-[#2555ff]/5 text-[#2555ff] hover:bg-[#2555ff] hover:text-white hover:shadow-xs cursor-pointer";
               let badge = "Open";
 
-              if (slot.isBooked) {
-                style = "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed";
+              if (isBooked) {
+                style = "border-slate-200 bg-slate-50 text-slate-400 line-through cursor-not-allowed opacity-60";
                 badge = "Booked";
-              } else if (slot.isPastTime) {
-                style = "border-slate-100 bg-[#f8fafc] text-slate-300 cursor-not-allowed";
+              } else if (isPast) {
+                style = "border-slate-100 bg-[#f8fafc] text-slate-300 line-through cursor-not-allowed opacity-50";
                 badge = "Elapsed";
               }
 
               return (
                 <div
                   key={index}
-                  onClick={() => handleBookSlotClick(slot)}
+                  onClick={() => !isPast && !isBooked && handleBookSlotClick(slot)}
                   className={`p-3 rounded-lg border text-left transition-all duration-150 shadow-2xs ${style}`}
                 >
                   <div className="text-[13px] font-mono font-bold leading-tight">{slot.startTime}</div>

@@ -233,24 +233,27 @@ class DoctorService {
    * - Validates past dates & past time slots
    * - Cross-references active bookings in DB
    */
-  async getAvailableSlots({ doctorId, date }) {
+  async getAvailableSlots({ doctorId, date, req }) {
     if (!doctorId || !date) {
       throw new AppError('Doctor ID and Date (YYYY-MM-DD) are required', 400);
     }
 
     // Determine Day of Week for date
-    // Create Date safely in UTC/local without zone skew
     const [y, m, d] = date.split('-').map(Number);
     const targetDate = new Date(y, m - 1, d);
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const targetDayName = dayNames[targetDate.getDay()];
 
-    // Check past date
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    const isToday = (date === todayStr);
+    // Client local clock detection (eliminates cloud server UTC timezone discrepancy)
+    const clientDate = req?.headers?.['x-client-date'] || req?.query?.clientDate;
+    const clientMinutes = Number(req?.headers?.['x-client-minutes'] || req?.query?.clientMinutes);
 
-    if (date < todayStr) {
+    const today = new Date();
+    const serverTodayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const effectiveToday = clientDate || serverTodayStr;
+    const isToday = (date === effectiveToday);
+
+    if (date < effectiveToday) {
       return {
         date,
         day: targetDayName,
@@ -296,7 +299,12 @@ class DoctorService {
       name: b.name
     }));
 
-    const currentMinutesNow = isToday ? (today.getHours() * 60 + today.getMinutes()) : -1;
+    let currentMinutesNow = -1;
+    if (isToday) {
+      currentMinutesNow = (!isNaN(clientMinutes) && clientMinutes >= 0)
+        ? clientMinutes
+        : (today.getHours() * 60 + today.getMinutes());
+    }
     const generatedSlots = [];
 
     // Iterate through all sessions

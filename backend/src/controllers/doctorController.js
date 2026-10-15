@@ -53,7 +53,7 @@ const updateDoctorSchedule = async (req, res, next) => {
 const getAvailableSlots = async (req, res, next) => {
   try {
     const { doctorId, date } = req.query;
-    const slotData = await doctorService.getAvailableSlots({ doctorId, date });
+    const slotData = await doctorService.getAvailableSlots({ doctorId, date, req });
     return successResponse(res, 200, 'Slots generated successfully', slotData);
   } catch (error) {
     next(error);

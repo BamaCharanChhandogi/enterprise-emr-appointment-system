@@ -11,6 +11,21 @@ import {
 } from 'lucide-react';
 import PrintSlipModal from '../components/PrintSlipModal';
 
+// Helper to evaluate whether a time slot has elapsed based on client local clock
+const isPastSlotTime = (slotTime, dateStr) => {
+  if (!slotTime || !dateStr) return false;
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  
+  if (dateStr < todayStr) return true;
+  if (dateStr > todayStr) return false;
+
+  const [hours, minutes] = slotTime.split(':').map(Number);
+  const slotMinutes = (hours * 60) + (minutes || 0);
+  const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+  return slotMinutes <= currentMinutes;
+};
+
 const BookAppointment = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -69,12 +84,29 @@ const BookAppointment = () => {
 
   useEffect(() => {
     if (selectedDoctorId && date) {
+      const now = new Date();
+      const clientDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const clientMinutes = now.getHours() * 60 + now.getMinutes();
+
       api.get('/slots', {
-        params: { doctorId: selectedDoctorId, date }
+        params: { 
+          doctorId: selectedDoctorId, 
+          date,
+          clientDate,
+          clientMinutes
+        }
       }).then(res => {
         if (res.data?.success) {
           const slots = res.data.data.slots || [];
           setAvailableSlots(slots);
+          // Auto-reset selected slot if it became elapsed or booked
+          if (selectedSlot) {
+            const isElapsed = isPastSlotTime(selectedSlot.startTime, date);
+            const match = slots.find(s => s.startTime === selectedSlot.startTime);
+            if (isElapsed || !match || !match.isAvailable) {
+              setSelectedSlot(null);
+            }
+          }
         }
       }).catch(err => console.error(err));
     }
@@ -105,6 +137,11 @@ const BookAppointment = () => {
 
     if (!selectedSlot) {
       setError('Please select an available time slot');
+      return;
+    }
+
+    if (isPastSlotTime(selectedSlot.startTime, date)) {
+      setError(`Cannot book elapsed past time slot (${selectedSlot.startTime}). Please select an upcoming slot.`);
       return;
     }
 
@@ -369,18 +406,65 @@ const BookAppointment = () => {
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                Available Time Slots
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Select Time Slot
+                </label>
+                <div className="flex items-center space-x-3 text-[11px] text-slate-500 font-medium">
+                  <span className="flex items-center space-x-1">
+                    <span className="w-2 h-2 rounded-full bg-[#2555ff]"></span>
+                    <span>Open</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+                    <span>Booked</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <span className="w-2 h-2 rounded-full bg-slate-200"></span>
+                    <span>Elapsed</span>
+                  </span>
+                </div>
+              </div>
 
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-40 overflow-y-auto">
-                {availableSlots.filter(s => s.isAvailable).length === 0 ? (
-                  <div className="col-span-full py-4 text-center text-[12px] text-slate-400">
-                    No open slots on this date.
-                  </div>
-                ) : (
-                  availableSlots.filter(s => s.isAvailable).map((slot, i) => {
+              {availableSlots.length === 0 ? (
+                <div className="col-span-full py-6 border border-dashed border-slate-200 rounded-xl text-center text-[12px] text-slate-400">
+                  No consultation shifts scheduled on this date.
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-1">
+                  {availableSlots.map((slot, i) => {
+                    const isPast = slot.isPastTime || isPastSlotTime(slot.startTime, date);
+                    const isBooked = slot.isBooked || slot.status === 'Booked';
                     const isSelected = selectedSlot?.startTime === slot.startTime;
+
+                    if (isPast) {
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          disabled
+                          title="Elapsed time slot"
+                          className="py-2 px-2.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 line-through text-[12px] font-mono font-medium cursor-not-allowed opacity-60"
+                        >
+                          {slot.startTime}
+                        </button>
+                      );
+                    }
+
+                    if (isBooked) {
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          disabled
+                          title="Already booked"
+                          className="py-2 px-2.5 rounded-lg border border-slate-200 bg-slate-100 text-slate-400 line-through text-[12px] font-mono font-medium cursor-not-allowed opacity-70"
+                        >
+                          {slot.startTime}
+                        </button>
+                      );
+                    }
+
                     return (
                       <button
                         key={i}
@@ -389,15 +473,15 @@ const BookAppointment = () => {
                         className={`py-2 px-2.5 rounded-lg border text-[12px] font-mono font-bold transition shadow-2xs ${
                           isSelected
                             ? 'bg-[#2555ff] text-white border-[#2555ff] shadow-xs'
-                            : 'bg-white text-slate-800 hover:bg-slate-50 border-slate-200'
+                            : 'bg-white text-slate-800 hover:bg-slate-50 border-slate-200 hover:border-[#2555ff]/40'
                         }`}
                       >
                         {slot.startTime}
                       </button>
                     );
-                  })
-                )}
-              </div>
+                  })}
+                </div>
+              )}
             </div>
           </div>
 

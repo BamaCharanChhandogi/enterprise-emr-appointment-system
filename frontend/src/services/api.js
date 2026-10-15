@@ -7,12 +7,16 @@ const api = axios.create({
   }
 });
 
-// Interceptor to attach Access Token
+// Interceptor to attach Access Token and Client Local Clock
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('emr_access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const now = new Date();
+  config.headers['x-client-minutes'] = now.getHours() * 60 + now.getMinutes();
+  config.headers['x-client-date'] = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  config.headers['x-client-timezone'] = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata';
   return config;
 }, (error) => Promise.reject(error));
 

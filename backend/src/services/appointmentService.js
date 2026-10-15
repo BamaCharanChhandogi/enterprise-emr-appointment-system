@@ -54,16 +54,22 @@ class AppointmentService {
 
     // 2. Validate booking is not in the past
     const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    if (date < todayStr) {
+    const serverTodayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const clientDate = req?.headers?.['x-client-date'] || req?.body?.clientDate;
+    const clientMinutes = Number(req?.headers?.['x-client-minutes'] || req?.body?.clientMinutes);
+    const effectiveToday = clientDate || serverTodayStr;
+
+    if (date < effectiveToday) {
       throw new AppError('Cannot book an appointment for a past date', 400);
     }
-    if (date === todayStr) {
+    if (date === effectiveToday) {
       const [h, m] = slotStartTime.split(':').map(Number);
       const slotMinutes = h * 60 + m;
-      const currentMinutes = today.getHours() * 60 + today.getMinutes();
+      const currentMinutes = (!isNaN(clientMinutes) && clientMinutes >= 0)
+        ? clientMinutes
+        : (today.getHours() * 60 + today.getMinutes());
       if (slotMinutes <= currentMinutes) {
-        throw new AppError('Cannot book an appointment for an elapsed time slot', 400);
+        throw new AppError(`Cannot book an appointment for an elapsed time slot (${slotStartTime}). Please select a future time slot.`, 400);
       }
     }
 
@@ -122,6 +128,21 @@ class AppointmentService {
     if (existingBooking) {
       throw new AppError(
         `Conflict: The time slot ${slotStartTime} on ${date} for this doctor has already been booked. Please choose another slot.`,
+        409
+      );
+    }
+
+    // Check if the same patient already has an active appointment at this exact date & time with another doctor
+    const patientSlotConflict = await Appointment.findOne({
+      patient: patientRecord._id,
+      date,
+      slotStartTime,
+      status: { $in: ['Scheduled', 'Arrived'] }
+    }).populate('doctor', 'name');
+
+    if (patientSlotConflict) {
+      throw new AppError(
+        `Conflict: Patient "${patientRecord.name}" is already scheduled for an appointment at ${slotStartTime} on ${date} with ${patientSlotConflict.doctor?.name || 'another physician'}. A patient cannot be scheduled in two consultations simultaneously.`,
         409
       );
     }
