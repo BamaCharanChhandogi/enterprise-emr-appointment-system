@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { UserPlus, Calendar, Plus, Clock, Save, CheckCircle } from 'lucide-react';
+import { Plus, UserPlus, Save, CheckCircle } from 'lucide-react';
 
 const StaffManagement = () => {
   const [doctors, setDoctors] = useState([]);
@@ -9,7 +9,6 @@ const StaffManagement = () => {
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // New Doctor Form
   const [showDoctorModal, setShowDoctorModal] = useState(false);
   const [doctorForm, setDoctorForm] = useState({
     name: '',
@@ -19,7 +18,6 @@ const StaffManagement = () => {
     phone: ''
   });
 
-  // New Receptionist Form
   const [showReceptionModal, setShowReceptionModal] = useState(false);
   const [receptionForm, setReceptionForm] = useState({
     name: '',
@@ -118,155 +116,149 @@ const StaffManagement = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-200 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e2e8f0] mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Staff & Clinical Schedule Administration</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Configure physician working days, multi-session shifts, lunch breaks, and slot durations
+          <h1 className="text-lg font-bold text-[#0f172a]">Staff & Clinical Shift Administration</h1>
+          <p className="text-[12px] text-[#64748b] mt-0.5">
+            Configure physician working days, multi-session shifts, breaks, and slot duration
           </p>
         </div>
 
-        <div className="mt-4 md:mt-0 flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           <button
             onClick={() => setShowDoctorModal(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1.5"
+            className="btn-primary text-[12px]"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Add Doctor</span>
           </button>
           <button
             onClick={() => setShowReceptionModal(true)}
-            className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5"
+            className="btn-secondary text-[12px]"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-3.5 h-3.5" />
             <span>Add Receptionist</span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Doctors Directory Sidebar */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm h-fit">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-            Physicians ({doctors.length})
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Doctors Directory */}
+        <div className="elite-card p-3 h-fit">
+          <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#64748b] mb-2 px-1">
+            Doctors ({doctors.length})
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {doctors.map(d => (
               <div
                 key={d._id}
                 onClick={() => selectDoctor(d)}
-                className={`p-3 rounded-xl cursor-pointer transition border text-sm ${
+                className={`p-2.5 rounded-[5px] cursor-pointer transition text-[12px] ${
                   selectedDoctor?._id === d._id
-                    ? 'bg-blue-50/80 border-blue-300 text-blue-900 shadow-sm'
-                    : 'bg-white hover:bg-slate-50 border-slate-100 text-slate-700'
+                    ? 'bg-[#2555ff]/10 border border-[#2555ff]/30 text-[#0f172a]'
+                    : 'hover:bg-[#f8fafc] border border-transparent text-[#64748b]'
                 }`}
               >
-                <div className="font-bold">{d.name}</div>
-                <div className="text-xs text-slate-500">{d.department}</div>
+                <div className="font-semibold text-[#0f172a]">{d.name}</div>
+                <div className="text-[11px] text-[#2555ff]">{d.department}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Schedule Editor */}
-        <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+        <div className="lg:col-span-3 elite-card p-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0] mb-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">
-                Weekly Schedule: {selectedDoctor?.name}
+              <h2 className="text-[14px] font-bold text-[#0f172a]">
+                Weekly Shift: {selectedDoctor?.name}
               </h2>
-              <p className="text-xs text-slate-500">{selectedDoctor?.department}</p>
+              <p className="text-[11px] text-[#2555ff] font-medium">{selectedDoctor?.department}</p>
             </div>
 
             <button
               onClick={handleSaveSchedule}
               disabled={loading}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center space-x-2 transition disabled:opacity-50"
+              className="btn-primary text-[12px]"
             >
               {saveSuccess ? (
                 <>
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Schedule Saved!</span>
+                  <CheckCircle className="w-3.5 h-3.5 text-white" />
+                  <span>Saved!</span>
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4" />
-                  <span>{loading ? 'Saving...' : 'Save Shift Configuration'}</span>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{loading ? 'Saving...' : 'Save Shifts'}</span>
                 </>
               )}
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             {schedule.map((dayPlan, idx) => (
               <div
                 key={dayPlan.day}
-                className={`p-4 rounded-2xl border transition-all ${
+                className={`p-3 rounded-[5px] border transition ${
                   dayPlan.isActive
-                    ? 'border-slate-200 bg-white'
-                    : 'border-slate-100 bg-slate-50 opacity-60'
+                    ? 'border-[#e2e8f0] bg-white'
+                    : 'border-[#f1f5f9] bg-[#f8fafc] opacity-50'
                 }`}
               >
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={dayPlan.isActive}
                       onChange={() => handleDayToggle(idx)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      className="rounded-[3px] text-[#2555ff] focus:ring-[#2555ff]"
                     />
-                    <span className="font-bold text-slate-800 text-sm w-28">{dayPlan.day}</span>
-                  </div>
+                    <span className="font-semibold text-[#0f172a] text-[13px]">{dayPlan.day}</span>
+                  </label>
 
                   {dayPlan.isActive && (
-                    <div className="flex items-center space-x-3 text-xs">
-                      <span className="text-slate-500">Slot Duration:</span>
+                    <div className="flex items-center space-x-2 text-[11px]">
+                      <span className="text-[#64748b]">Slot Duration:</span>
                       <select
                         value={dayPlan.slotDuration}
                         onChange={(e) => handleSlotDurationChange(idx, e.target.value)}
-                        className="px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-800"
+                        className="elite-input py-0.5 px-2 text-[11px] w-auto font-semibold"
                       >
-                        <option value={10}>10 mins</option>
-                        <option value={15}>15 mins</option>
-                        <option value={20}>20 mins</option>
-                        <option value={30}>30 mins</option>
-                        <option value={60}>60 mins</option>
+                        <option value={10}>10m</option>
+                        <option value={15}>15m</option>
+                        <option value={20}>20m</option>
+                        <option value={30}>30m</option>
+                        <option value={60}>60m</option>
                       </select>
                     </div>
                   )}
                 </div>
 
                 {dayPlan.isActive && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    {/* Sessions */}
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      <span className="font-semibold text-blue-700 block mb-2 uppercase tracking-wider text-[11px]">
-                        Working Sessions
+                  <div className="mt-2.5 pt-2 border-t border-[#f1f5f9] grid grid-cols-2 gap-3 text-[11px]">
+                    <div className="bg-[#f8fafc] border border-[#e2e8f0] p-2 rounded-[5px]">
+                      <span className="font-semibold text-[#2555ff] block mb-1 uppercase text-[10px] tracking-wider">
+                        Sessions
                       </span>
                       {dayPlan.sessions?.map((s, sIdx) => (
-                        <div key={sIdx} className="flex items-center space-x-2 text-slate-700 font-mono mb-1">
-                          <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                          <span className="font-sans font-medium text-slate-600">{s.name}:</span>
-                          <span className="font-bold">{s.startTime} – {s.endTime}</span>
+                        <div key={sIdx} className="text-[#0f172a] font-mono">
+                          {s.name}: <b>{s.startTime} – {s.endTime}</b>
                         </div>
                       ))}
                     </div>
 
-                    {/* Breaks */}
-                    <div className="bg-amber-50/60 p-3 rounded-xl border border-amber-100">
-                      <span className="font-semibold text-amber-700 block mb-2 uppercase tracking-wider text-[11px]">
-                        Rest / Lunch Breaks (Never Booked)
+                    <div className="bg-[#f8fafc] border border-[#e2e8f0] p-2 rounded-[5px]">
+                      <span className="font-semibold text-amber-700 block mb-1 uppercase text-[10px] tracking-wider">
+                        Breaks (Omitted from Booking)
                       </span>
                       {dayPlan.breaks?.length === 0 ? (
-                        <span className="text-slate-400">No break scheduled</span>
+                        <span className="text-[#94a3b8]">No break configured</span>
                       ) : (
                         dayPlan.breaks?.map((b, bIdx) => (
-                          <div key={bIdx} className="flex items-center space-x-2 text-slate-700 font-mono mb-1">
-                            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                            <span className="font-sans font-medium text-slate-600">{b.name}:</span>
-                            <span className="font-bold">{b.startTime} – {b.endTime}</span>
+                          <div key={bIdx} className="text-[#0f172a] font-mono">
+                            {b.name}: <b>{b.startTime} – {b.endTime}</b>
                           </div>
                         ))
                       )}
@@ -281,66 +273,56 @@ const StaffManagement = () => {
 
       {/* Add Doctor Modal */}
       {showDoctorModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleCreateDoctor} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Register New Doctor</h3>
-            <div className="space-y-3 text-sm">
+        <div className="fixed inset-0 bg-[#0f172a]/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleCreateDoctor} className="bg-white rounded-[5px] max-w-sm w-full p-5 shadow-xl border border-[#e2e8f0]">
+            <h3 className="text-[14px] font-bold text-[#0f172a] mb-3">Add New Doctor</h3>
+            <div className="space-y-2.5 text-[12px]">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Doctor Name *</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Doctor Name *</label>
                 <input
                   type="text"
                   required
                   value={doctorForm.name}
                   onChange={(e) => setDoctorForm({ ...doctorForm, name: e.target.value })}
-                  placeholder="e.g. Dr. Robert Chase"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  placeholder="Dr. Robert Chase"
+                  className="elite-input"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Email *</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Email *</label>
                 <input
                   type="email"
                   required
                   value={doctorForm.email}
                   onChange={(e) => setDoctorForm({ ...doctorForm, email: e.target.value })}
                   placeholder="chase@emr.com"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  className="elite-input"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Department *</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Department *</label>
                 <input
                   type="text"
                   required
                   value={doctorForm.department}
                   onChange={(e) => setDoctorForm({ ...doctorForm, department: e.target.value })}
-                  placeholder="e.g. Cardiology, Pediatrics"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Phone</label>
-                <input
-                  type="text"
-                  value={doctorForm.phone}
-                  onChange={(e) => setDoctorForm({ ...doctorForm, phone: e.target.value })}
-                  placeholder="+1 555-0199"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  placeholder="Cardiology"
+                  className="elite-input"
                 />
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end space-x-3">
+            <div className="mt-4 flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={() => setShowDoctorModal(false)}
-                className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl"
+                className="btn-secondary text-[11px] py-1 px-3"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-xl"
+                className="btn-primary text-[11px] py-1 px-3"
               >
                 Create Doctor
               </button>
@@ -351,57 +333,47 @@ const StaffManagement = () => {
 
       {/* Add Receptionist Modal */}
       {showReceptionModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleCreateReceptionist} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Register New Receptionist</h3>
-            <div className="space-y-3 text-sm">
+        <div className="fixed inset-0 bg-[#0f172a]/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+          <form onSubmit={handleCreateReceptionist} className="bg-white rounded-[5px] max-w-sm w-full p-5 shadow-xl border border-[#e2e8f0]">
+            <h3 className="text-[14px] font-bold text-[#0f172a] mb-3">Add New Receptionist</h3>
+            <div className="space-y-2.5 text-[12px]">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Receptionist Name *</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Name *</label>
                 <input
                   type="text"
                   required
                   value={receptionForm.name}
                   onChange={(e) => setReceptionForm({ ...receptionForm, name: e.target.value })}
-                  placeholder="e.g. Allison Cameron"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  placeholder="Allison Cameron"
+                  className="elite-input"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Email *</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Email *</label>
                 <input
                   type="email"
                   required
                   value={receptionForm.email}
                   onChange={(e) => setReceptionForm({ ...receptionForm, email: e.target.value })}
                   placeholder="cameron@emr.com"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Phone</label>
-                <input
-                  type="text"
-                  value={receptionForm.phone}
-                  onChange={(e) => setReceptionForm({ ...receptionForm, phone: e.target.value })}
-                  placeholder="+1 555-0188"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  className="elite-input"
                 />
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end space-x-3">
+            <div className="mt-4 flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={() => setShowReceptionModal(false)}
-                className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl"
+                className="btn-secondary text-[11px] py-1 px-3"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl"
+                className="btn-primary text-[11px] py-1 px-3"
               >
-                Create Receptionist
+                Create
               </button>
             </div>
           </form>

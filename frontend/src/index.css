@@ -13,6 +13,7 @@
 
   * {
     border-radius: var(--radius);
+    box-sizing: border-box;
   }
 
   body {
@@ -79,12 +80,18 @@
   padding: 0.45rem 0.75rem;
   border-radius: 5px !important;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
 }
 
 .elite-input:focus {
   outline: none;
   border-color: #2555ff;
   box-shadow: 0 0 0 2px rgba(37, 85, 255, 0.15);
+}
+
+/* Explicit input padding when an absolute icon is inside */
+.elite-input-with-icon {
+  padding-left: 2.25rem !important; /* 36px offset prevents text colliding with search icon */
 }
 
 .elite-table-head {

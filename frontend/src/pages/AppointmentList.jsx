@@ -5,16 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { getSocket } from '../services/socket';
 import {
   Search,
-  Filter,
-  CheckCircle,
-  XCircle,
-  Clock,
-  UserCheck,
   ChevronLeft,
   ChevronRight,
-  FileEdit,
-  Eye,
-  AlertCircle
+  Filter
 } from 'lucide-react';
 
 const AppointmentList = () => {
@@ -30,7 +23,6 @@ const AppointmentList = () => {
     limit: 10
   });
 
-  // Filters
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [department, setDepartment] = useState('');
@@ -79,13 +71,9 @@ const AppointmentList = () => {
     fetchAppointments(1);
   }, [status, department, startDate, endDate, sortBy, sortOrder]);
 
-  // Real-time synchronization
   useEffect(() => {
     const socket = getSocket();
-    const handleUpdate = () => {
-      fetchAppointments(pagination.currentPage);
-    };
-
+    const handleUpdate = () => fetchAppointments(pagination.currentPage);
     socket.on('appointment_event', handleUpdate);
     return () => {
       socket.off('appointment_event', handleUpdate);
@@ -148,40 +136,39 @@ const AppointmentList = () => {
   const getStatusBadge = (st) => {
     switch (st) {
       case 'Scheduled':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">Scheduled</span>;
+        return <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-semibold bg-[#2555ff]/10 text-[#2555ff] border border-[#2555ff]/20">Scheduled</span>;
       case 'Arrived':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Arrived</span>;
+        return <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Arrived</span>;
       case 'Completed':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Completed</span>;
+        return <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Completed</span>;
       case 'Cancelled':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">Cancelled</span>;
+        return <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">Cancelled</span>;
       default:
         return <span>{st}</span>;
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Title */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Clinical Appointment Management</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Server-side filtered, sorted, and paginated records with role-based action workflows
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="pb-4 border-b border-[#e2e8f0] mb-5">
+        <h1 className="text-lg font-bold text-[#0f172a]">Appointments Directory</h1>
+        <p className="text-[12px] text-[#64748b] mt-0.5">
+          Server-side filtered, sorted, and paginated patient records with workflow actions
         </p>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm mb-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="elite-card p-4 mb-4 space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="md:col-span-2 relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchAppointments(1)}
-              placeholder="Search by Patient Name, Phone, ID or Ref # (Press Enter)..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Search patient, phone, MRN or ref # (Enter)..."
+              className="elite-input elite-input-with-icon text-[12px]"
             />
           </div>
 
@@ -189,7 +176,7 @@ const AppointmentList = () => {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700"
+              className="elite-input text-[12px]"
             >
               <option value="">All Statuses</option>
               <option value="Scheduled">Scheduled</option>
@@ -207,7 +194,7 @@ const AppointmentList = () => {
                 setSortBy(sb);
                 setSortOrder(so);
               }}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700"
+              className="elite-input text-[12px]"
             >
               <option value="date-desc">Date (Newest First)</option>
               <option value="date-asc">Date (Oldest First)</option>
@@ -216,27 +203,27 @@ const AppointmentList = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100 text-xs">
-          <div className="flex items-center space-x-3">
-            <span className="font-semibold text-slate-600">Date Range:</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-[#e2e8f0] text-[11px]">
+          <div className="flex items-center space-x-2">
+            <span className="font-semibold text-[#64748b]">Date Range:</span>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+              className="elite-input py-1 px-2 text-[11px] w-auto inline-block"
             />
-            <span className="text-slate-400">to</span>
+            <span className="text-[#94a3b8]">to</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+              className="elite-input py-1 px-2 text-[11px] w-auto inline-block"
             />
           </div>
 
           <button
             onClick={() => fetchAppointments(1)}
-            className="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+            className="btn-primary py-1 px-3 text-[11px]"
           >
             Apply Filters
           </button>
@@ -244,93 +231,89 @@ const AppointmentList = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div className="elite-card overflow-hidden">
         {loading ? (
-          <div className="py-20 text-center text-slate-400">Loading appointments...</div>
+          <div className="py-16 text-center text-[12px] text-[#64748b]">Loading appointments...</div>
         ) : appointments.length === 0 ? (
-          <div className="py-20 text-center text-slate-400">No appointments found matching your query.</div>
+          <div className="py-16 text-center text-[12px] text-[#64748b]">No appointments found.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+            <table className="w-full text-left text-[12px]">
+              <thead className="elite-table-head">
                 <tr>
-                  <th className="py-3.5 px-4">Ref Number</th>
-                  <th className="py-3.5 px-4">Patient Information</th>
-                  <th className="py-3.5 px-4">Physician & Dept</th>
-                  <th className="py-3.5 px-4">Date & Time</th>
-                  <th className="py-3.5 px-4">Purpose</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Workflow Actions</th>
+                  <th className="py-2.5 px-4">Ref Number</th>
+                  <th className="py-2.5 px-4">Patient</th>
+                  <th className="py-2.5 px-4">Physician & Dept</th>
+                  <th className="py-2.5 px-4">Date & Time</th>
+                  <th className="py-2.5 px-4">Purpose</th>
+                  <th className="py-2.5 px-4">Status</th>
+                  <th className="py-2.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#e2e8f0]">
                 {appointments.map((app) => {
                   const isHighlighted = app._id === highlightId;
                   return (
                     <tr
                       key={app._id}
-                      className={`hover:bg-slate-50/80 transition-colors ${
-                        isHighlighted ? 'bg-amber-50/60 ring-2 ring-amber-300' : ''
+                      className={`hover:bg-[#f8fafc] transition-colors ${
+                        isHighlighted ? 'bg-amber-50/60' : ''
                       }`}
                     >
-                      <td className="py-4 px-4 font-mono font-bold text-slate-900 text-xs">
+                      <td className="py-3 px-4 font-mono font-medium text-[#0f172a]">
                         {app.appointmentNumber}
                       </td>
 
-                      <td className="py-4 px-4">
-                        <div className="font-bold text-slate-900">{app.patient?.name}</div>
-                        <div className="text-xs text-slate-400 font-mono">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-[#0f172a]">{app.patient?.name}</div>
+                        <div className="text-[11px] text-[#64748b] font-mono">
                           {app.patient?.patientId} • {app.patient?.phone}
                         </div>
                       </td>
 
-                      <td className="py-4 px-4">
-                        <div className="font-semibold text-slate-800">{app.doctor?.name}</div>
-                        <div className="text-xs text-blue-600 font-medium">{app.department}</div>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-[#0f172a]">{app.doctor?.name}</div>
+                        <div className="text-[10px] text-[#2555ff] font-medium">{app.department}</div>
                       </td>
 
-                      <td className="py-4 px-4">
-                        <div className="font-medium text-slate-800">{app.date}</div>
-                        <div className="text-xs font-semibold text-slate-500 font-mono">
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-[#0f172a]">{app.date}</div>
+                        <div className="text-[11px] text-[#2555ff] font-semibold font-mono">
                           {app.slotStartTime} - {app.slotEndTime}
                         </div>
                       </td>
 
-                      <td className="py-4 px-4 text-xs max-w-[150px] truncate text-slate-700">
+                      <td className="py-3 px-4 text-[#64748b] max-w-[140px] truncate">
                         {app.purpose || 'General Consultation'}
                       </td>
 
-                      <td className="py-4 px-4">
+                      <td className="py-3 px-4">
                         {getStatusBadge(app.status)}
                       </td>
 
-                      <td className="py-4 px-4 text-right space-x-2">
-                        {/* Status workflow triggers based on roles */}
+                      <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
                         {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && app.status === 'Scheduled' && (
                           <button
                             onClick={() => handleMarkArrived(app._id)}
                             disabled={actionLoading}
-                            className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold transition"
-                            title="Mark Patient as Arrived in Lobby"
+                            className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-[5px] text-[10px] font-semibold transition"
                           >
-                            Mark Arrived
+                            Arrived
                           </button>
                         )}
 
                         <button
                           onClick={() => openEditModal(app)}
-                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition"
-                          title="View / Edit Notes"
+                          className="px-2 py-0.5 bg-white hover:bg-[#f1f5f9] text-[#0f172a] border border-[#e2e8f0] rounded-[5px] text-[10px] font-semibold transition"
                         >
-                          Notes / Status
+                          Notes
                         </button>
 
                         {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && app.status !== 'Cancelled' && (
                           <button
                             onClick={() => handleCancel(app._id)}
                             disabled={actionLoading}
-                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold transition"
-                            title="Cancel Appointment"
+                            className="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-[5px] text-[10px] font-semibold transition"
                           >
                             Cancel
                           </button>
@@ -344,53 +327,52 @@ const AppointmentList = () => {
           </div>
         )}
 
-        {/* Pagination Bar */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+        <div className="px-4 py-2.5 bg-[#f8fafc] border-t border-[#e2e8f0] flex items-center justify-between text-[11px] text-[#64748b]">
           <div>
-            Showing <span className="font-bold">{appointments.length}</span> of{' '}
-            <span className="font-bold">{pagination.totalItems}</span> total appointments
+            Showing <span className="font-semibold text-[#0f172a]">{appointments.length}</span> of{' '}
+            <span className="font-semibold text-[#0f172a]">{pagination.totalItems}</span> appointments
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5">
             <button
               onClick={() => fetchAppointments(pagination.currentPage - 1)}
               disabled={pagination.currentPage <= 1 || loading}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-40 transition"
+              className="p-1 rounded-[5px] border border-[#e2e8f0] bg-white hover:bg-[#f1f5f9] disabled:opacity-30 disabled:pointer-events-none transition"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5 text-[#0f172a]" />
             </button>
-            <span className="font-semibold text-slate-800">
+            <span className="px-2 font-medium text-[#0f172a]">
               Page {pagination.currentPage} of {pagination.totalPages || 1}
             </span>
             <button
               onClick={() => fetchAppointments(pagination.currentPage + 1)}
               disabled={pagination.currentPage >= pagination.totalPages || loading}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-white disabled:opacity-40 transition"
+              className="p-1 rounded-[5px] border border-[#e2e8f0] bg-white hover:bg-[#f1f5f9] disabled:opacity-30 disabled:pointer-events-none transition"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5 text-[#0f172a]" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Edit Notes & Status Modal */}
+      {/* Edit Notes Modal */}
       {editingNotes && selectedApp && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-1">
-              Appointment Details: {selectedApp.appointmentNumber}
+        <div className="fixed inset-0 bg-[#0f172a]/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[5px] max-w-md w-full p-5 shadow-xl border border-[#e2e8f0]">
+            <h3 className="text-[14px] font-bold text-[#0f172a] mb-0.5">
+              Appointment #{selectedApp.appointmentNumber}
             </h3>
-            <p className="text-xs text-slate-500 mb-4 font-medium">
-              Patient: {selectedApp.patient?.name} • Doctor: {selectedApp.doctor?.name}
+            <p className="text-[11px] text-[#64748b] mb-4">
+              Patient: {selectedApp.patient?.name} • Physician: {selectedApp.doctor?.name}
             </p>
 
-            <div className="space-y-4 text-sm">
+            <div className="space-y-3 text-[12px]">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Workflow Status</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Status</label>
                 <select
                   value={notesForm.status}
                   onChange={(e) => setNotesForm({ ...notesForm, status: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  className="elite-input"
                 >
                   <option value="Scheduled">Scheduled</option>
                   <option value="Arrived">Arrived</option>
@@ -400,55 +382,55 @@ const AppointmentList = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Purpose</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Purpose</label>
                 <input
                   type="text"
                   value={notesForm.purpose}
                   onChange={(e) => setNotesForm({ ...notesForm, purpose: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  className="elite-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">General Notes</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Notes</label>
                 <textarea
                   rows="2"
                   value={notesForm.notes}
                   onChange={(e) => setNotesForm({ ...notesForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  className="elite-input"
                 ></textarea>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                  Doctor's Consultation Notes (Clinical Summary)
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">
+                  Doctor Consultation Notes
                 </label>
                 <textarea
                   rows="3"
                   value={notesForm.consultationNotes}
                   onChange={(e) => setNotesForm({ ...notesForm, consultationNotes: e.target.value })}
-                  placeholder="Diagnosis, prescription, follow-up instructions..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  placeholder="Diagnosis, prescription..."
+                  className="elite-input"
                 ></textarea>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end space-x-3">
+            <div className="mt-5 flex justify-end space-x-2">
               <button
                 onClick={() => {
                   setEditingNotes(false);
                   setSelectedApp(null);
                 }}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition"
+                className="btn-secondary text-[11px] py-1 px-3"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveNotes}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition"
+                className="btn-primary text-[11px] py-1 px-3"
               >
-                {actionLoading ? 'Saving...' : 'Save Changes'}
+                {actionLoading ? 'Saving...' : 'Save Notes'}
               </button>
             </div>
           </div>

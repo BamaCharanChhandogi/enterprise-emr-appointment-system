@@ -242,13 +242,13 @@ const BookAppointment = () => {
             {patientType === 'EXISTING' ? (
               <div>
                 <div className="relative mb-2">
-                  <Search className="w-3.5 h-3.5 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="w-3.5 h-3.5 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => handleSearchPatient(e.target.value)}
                     placeholder="Search by name, phone or MRN..."
-                    className="w-full pl-8 elite-input text-[12px]"
+                    className="elite-input elite-input-with-icon text-[12px]"
                   />
                 </div>
 
