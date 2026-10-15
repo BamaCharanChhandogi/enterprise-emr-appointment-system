@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import * as Dialog from '@radix-ui/react-dialog';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { getSocket } from '../services/socket';
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Filter
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
 const AppointmentList = () => {
   const { user } = useAuth();
@@ -33,7 +30,7 @@ const AppointmentList = () => {
 
   const [loading, setLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState(null);
-  const [editingNotes, setEditingNotes] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const [notesForm, setNotesForm] = useState({ purpose: '', notes: '', consultationNotes: '', status: '' });
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -61,7 +58,7 @@ const AppointmentList = () => {
         }
       }
     } catch (err) {
-      console.error('Error fetching appointments:', err);
+      toast.error('Failed to load appointments');
     } finally {
       setLoading(false);
     }
@@ -73,7 +70,14 @@ const AppointmentList = () => {
 
   useEffect(() => {
     const socket = getSocket();
-    const handleUpdate = () => fetchAppointments(pagination.currentPage);
+    const handleUpdate = (data) => {
+      fetchAppointments(pagination.currentPage);
+      if (data?.action === 'CREATED') {
+        toast.info(`New appointment booked: ${data.appointment?.appointmentNumber}`);
+      } else if (data?.action === 'ARRIVED') {
+        toast.success(`Patient ${data.appointment?.patient?.name} marked Arrived`);
+      }
+    };
     socket.on('appointment_event', handleUpdate);
     return () => {
       socket.off('appointment_event', handleUpdate);
@@ -84,24 +88,26 @@ const AppointmentList = () => {
     try {
       setActionLoading(true);
       await api.post(`/appointments/${id}/arrive`);
+      toast.success('Patient checked in to lobby');
       fetchAppointments(pagination.currentPage);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update status');
+      toast.error(err.response?.data?.message || 'Failed to update status');
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleCancel = async (id) => {
-    const reason = window.prompt('Please enter cancellation reason:', 'Patient requested cancellation');
+    const reason = window.prompt('Cancellation reason:', 'Patient rescheduled');
     if (!reason) return;
 
     try {
       setActionLoading(true);
       await api.delete(`/appointments/${id}`, { data: { reason } });
+      toast.success('Appointment cancelled. Slot freed up.');
       fetchAppointments(pagination.currentPage);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to cancel appointment');
+      toast.error(err.response?.data?.message || 'Failed to cancel appointment');
     } finally {
       setActionLoading(false);
     }
@@ -112,17 +118,18 @@ const AppointmentList = () => {
     try {
       setActionLoading(true);
       await api.put(`/appointments/${selectedApp._id}`, notesForm);
+      setOpenModal(false);
       setSelectedApp(null);
-      setEditingNotes(false);
+      toast.success('Clinical record saved');
       fetchAppointments(pagination.currentPage);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update notes');
+      toast.error(err.response?.data?.message || 'Failed to save notes');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const openEditModal = (app) => {
+  const openEditDialog = (app) => {
     setSelectedApp(app);
     setNotesForm({
       purpose: app.purpose || '',
@@ -130,19 +137,19 @@ const AppointmentList = () => {
       consultationNotes: app.consultationNotes || '',
       status: app.status
     });
-    setEditingNotes(true);
+    setOpenModal(true);
   };
 
   const getStatusBadge = (st) => {
     switch (st) {
       case 'Scheduled':
-        return <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-semibold bg-[#2555ff]/10 text-[#2555ff] border border-[#2555ff]/20">Scheduled</span>;
+        return <span className="badge-scheduled">Scheduled</span>;
       case 'Arrived':
-        return <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Arrived</span>;
+        return <span className="badge-arrived">Arrived</span>;
       case 'Completed':
-        return <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Completed</span>;
+        return <span className="badge-completed">Completed</span>;
       case 'Cancelled':
-        return <span className="px-2 py-0.5 rounded-[5px] text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">Cancelled</span>;
+        return <span className="badge-cancelled">Cancelled</span>;
       default:
         return <span>{st}</span>;
     }
@@ -150,10 +157,12 @@ const AppointmentList = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      
+      {/* Header */}
       <div className="pb-4 border-b border-[#e2e8f0] mb-5">
-        <h1 className="text-lg font-bold text-[#0f172a]">Appointments Directory</h1>
+        <h1 className="text-[17px] font-bold text-[#0f172a] tracking-tight">Appointments Directory</h1>
         <p className="text-[12px] text-[#64748b] mt-0.5">
-          Server-side filtered, sorted, and paginated patient records with workflow actions
+          {user.role === 'DOCTOR' ? 'My Assigned Consultations' : 'All Hospital Patient Appointments'}
         </p>
       </div>
 
@@ -167,7 +176,7 @@ const AppointmentList = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchAppointments(1)}
-              placeholder="Search patient, phone, MRN or ref # (Enter)..."
+              placeholder="Search patient name, phone, or appointment # (Press Enter)..."
               className="elite-input elite-input-with-icon text-[12px]"
             />
           </div>
@@ -257,7 +266,7 @@ const AppointmentList = () => {
                     <tr
                       key={app._id}
                       className={`hover:bg-[#f8fafc] transition-colors ${
-                        isHighlighted ? 'bg-amber-50/60' : ''
+                        isHighlighted ? 'bg-amber-50/70' : ''
                       }`}
                     >
                       <td className="py-3 px-4 font-mono font-medium text-[#0f172a]">
@@ -283,7 +292,7 @@ const AppointmentList = () => {
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 text-[#64748b] max-w-[140px] truncate">
+                      <td className="py-3 px-4 text-[#64748b] max-w-[150px] truncate">
                         {app.purpose || 'General Consultation'}
                       </td>
 
@@ -292,28 +301,31 @@ const AppointmentList = () => {
                       </td>
 
                       <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                        {/* Receptionist: Mark Arrived */}
                         {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && app.status === 'Scheduled' && (
                           <button
                             onClick={() => handleMarkArrived(app._id)}
                             disabled={actionLoading}
-                            className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-[5px] text-[10px] font-semibold transition"
+                            className="px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-[#b45309] border border-amber-200 rounded-[4px] text-[10px] font-semibold transition"
                           >
-                            Arrived
+                            Mark Arrived
                           </button>
                         )}
 
+                        {/* Consultation Notes Modal Trigger */}
                         <button
-                          onClick={() => openEditModal(app)}
-                          className="px-2 py-0.5 bg-white hover:bg-[#f1f5f9] text-[#0f172a] border border-[#e2e8f0] rounded-[5px] text-[10px] font-semibold transition"
+                          onClick={() => openEditDialog(app)}
+                          className="px-2 py-0.5 bg-white hover:bg-slate-50 text-[#0f172a] border border-[#e2e8f0] rounded-[4px] text-[10px] font-semibold transition"
                         >
-                          Notes
+                          {user.role === 'DOCTOR' ? 'Consultation Notes' : 'Notes'}
                         </button>
 
+                        {/* Receptionist: Cancel */}
                         {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && app.status !== 'Cancelled' && (
                           <button
                             onClick={() => handleCancel(app._id)}
                             disabled={actionLoading}
-                            className="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-[5px] text-[10px] font-semibold transition"
+                            className="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-[#b91c1c] border border-rose-200 rounded-[4px] text-[10px] font-semibold transition"
                           >
                             Cancel
                           </button>
@@ -327,6 +339,7 @@ const AppointmentList = () => {
           </div>
         )}
 
+        {/* Pagination */}
         <div className="px-4 py-2.5 bg-[#f8fafc] border-t border-[#e2e8f0] flex items-center justify-between text-[11px] text-[#64748b]">
           <div>
             Showing <span className="font-semibold text-[#0f172a]">{appointments.length}</span> of{' '}
@@ -337,7 +350,7 @@ const AppointmentList = () => {
             <button
               onClick={() => fetchAppointments(pagination.currentPage - 1)}
               disabled={pagination.currentPage <= 1 || loading}
-              className="p-1 rounded-[5px] border border-[#e2e8f0] bg-white hover:bg-[#f1f5f9] disabled:opacity-30 disabled:pointer-events-none transition"
+              className="p-1 rounded-[4px] border border-[#e2e8f0] bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition"
             >
               <ChevronLeft className="w-3.5 h-3.5 text-[#0f172a]" />
             </button>
@@ -347,7 +360,7 @@ const AppointmentList = () => {
             <button
               onClick={() => fetchAppointments(pagination.currentPage + 1)}
               disabled={pagination.currentPage >= pagination.totalPages || loading}
-              className="p-1 rounded-[5px] border border-[#e2e8f0] bg-white hover:bg-[#f1f5f9] disabled:opacity-30 disabled:pointer-events-none transition"
+              className="p-1 rounded-[4px] border border-[#e2e8f0] bg-white hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition"
             >
               <ChevronRight className="w-3.5 h-3.5 text-[#0f172a]" />
             </button>
@@ -355,34 +368,39 @@ const AppointmentList = () => {
         </div>
       </div>
 
-      {/* Edit Notes Modal */}
-      {editingNotes && selectedApp && (
-        <div className="fixed inset-0 bg-[#0f172a]/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[5px] max-w-md w-full p-5 shadow-xl border border-[#e2e8f0]">
-            <h3 className="text-[14px] font-bold text-[#0f172a] mb-0.5">
-              Appointment #{selectedApp.appointmentNumber}
-            </h3>
-            <p className="text-[11px] text-[#64748b] mb-4">
-              Patient: {selectedApp.patient?.name} • Physician: {selectedApp.doctor?.name}
-            </p>
+      {/* Radix UI Consultation Notes Modal */}
+      <Dialog.Root open={openModal} onOpenChange={setOpenModal}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-[#0f172a]/50 backdrop-blur-xs z-50 animate-in fade-in" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-lg w-full bg-white rounded-[5px] p-6 shadow-2xl border border-[#e2e8f0] z-50">
+            <Dialog.Title className="text-[15px] font-bold text-[#0f172a]">
+              Clinical Consultation: {selectedApp?.appointmentNumber}
+            </Dialog.Title>
+            <Dialog.Description className="text-[12px] text-[#64748b] mt-0.5 mb-4">
+              Patient: <b>{selectedApp?.patient?.name}</b> • Attending: <b>{selectedApp?.doctor?.name}</b>
+            </Dialog.Description>
 
             <div className="space-y-3 text-[12px]">
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Status</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">
+                  Status Workflow
+                </label>
                 <select
                   value={notesForm.status}
                   onChange={(e) => setNotesForm({ ...notesForm, status: e.target.value })}
                   className="elite-input"
                 >
                   <option value="Scheduled">Scheduled</option>
-                  <option value="Arrived">Arrived</option>
-                  <option value="Completed">Completed</option>
+                  <option value="Arrived">Arrived (In Clinic)</option>
+                  <option value="Completed">Completed (Consulted)</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Purpose</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">
+                  Chief Complaint / Purpose
+                </label>
                 <input
                   type="text"
                   value={notesForm.purpose}
@@ -392,7 +410,9 @@ const AppointmentList = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Notes</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">
+                  Reception Notes
+                </label>
                 <textarea
                   rows="2"
                   value={notesForm.notes}
@@ -402,40 +422,40 @@ const AppointmentList = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">
-                  Doctor Consultation Notes
+                <label className="block text-[11px] font-semibold text-[#2555ff] uppercase mb-1">
+                  Physician Consultation Notes & Prescription
                 </label>
                 <textarea
                   rows="3"
                   value={notesForm.consultationNotes}
                   onChange={(e) => setNotesForm({ ...notesForm, consultationNotes: e.target.value })}
-                  placeholder="Diagnosis, prescription..."
-                  className="elite-input"
+                  placeholder="Clinical assessment, diagnosis, prescription..."
+                  className="elite-input border-[#2555ff]/40 focus:border-[#2555ff]"
                 ></textarea>
               </div>
             </div>
 
             <div className="mt-5 flex justify-end space-x-2">
               <button
-                onClick={() => {
-                  setEditingNotes(false);
-                  setSelectedApp(null);
-                }}
+                type="button"
+                onClick={() => setOpenModal(false)}
                 className="btn-secondary text-[11px] py-1 px-3"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleSaveNotes}
                 disabled={actionLoading}
                 className="btn-primary text-[11px] py-1 px-3"
               >
-                {actionLoading ? 'Saving...' : 'Save Notes'}
+                {actionLoading ? 'Saving...' : 'Save Consultation'}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
     </div>
   );
 };

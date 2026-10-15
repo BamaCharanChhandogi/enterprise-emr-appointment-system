@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -15,7 +16,18 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+        <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans">
+          <Toaster
+            position="top-right"
+            richColors
+            toastOptions={{
+              style: {
+                borderRadius: '5px',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '12px'
+              }
+            }}
+          />
           <Navbar />
           <main className="flex-1">
             <Routes>
