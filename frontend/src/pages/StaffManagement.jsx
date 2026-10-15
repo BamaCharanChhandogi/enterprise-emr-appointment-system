@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import api from '../services/api';
 import { Plus, UserPlus, Save, CheckCircle } from 'lucide-react';
 
@@ -82,9 +83,10 @@ const StaffManagement = () => {
         weeklySchedule: schedule
       });
       setSaveSuccess(true);
+      toast.success('Doctor schedule saved successfully');
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to save schedule');
+      toast.error(err.response?.data?.message || 'Failed to save schedule');
     } finally {
       setLoading(false);
     }
@@ -97,9 +99,9 @@ const StaffManagement = () => {
       setShowDoctorModal(false);
       setDoctorForm({ name: '', email: '', password: 'password123', department: 'Cardiology', phone: '' });
       fetchDoctors();
-      alert('Doctor created successfully with default schedule!');
+      toast.success('Doctor created successfully with default schedule');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create doctor');
+      toast.error(err.response?.data?.message || 'Failed to create doctor');
     }
   };
 
@@ -109,9 +111,9 @@ const StaffManagement = () => {
       await api.post('/doctors/receptionists', receptionForm);
       setShowReceptionModal(false);
       setReceptionForm({ name: '', email: '', password: 'password123', phone: '' });
-      alert('Receptionist created successfully!');
+      toast.success('Receptionist created successfully');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create receptionist');
+      toast.error(err.response?.data?.message || 'Failed to create receptionist');
     }
   };
 

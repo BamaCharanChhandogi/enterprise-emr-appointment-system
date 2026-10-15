@@ -34,6 +34,10 @@ const AppointmentList = () => {
   const [notesForm, setNotesForm] = useState({ purpose: '', notes: '', consultationNotes: '', status: '' });
   const [actionLoading, setActionLoading] = useState(false);
 
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [appToCancel, setAppToCancel] = useState(null);
+  const [cancelReason, setCancelReason] = useState('Patient rescheduled');
+
   const fetchAppointments = async (page = 1) => {
     setLoading(true);
     try {
@@ -97,14 +101,20 @@ const AppointmentList = () => {
     }
   };
 
-  const handleCancel = async (id) => {
-    const reason = window.prompt('Cancellation reason:', 'Patient rescheduled');
-    if (!reason) return;
+  const openCancelDialog = (app) => {
+    setAppToCancel(app);
+    setCancelReason('Patient rescheduled');
+    setCancelModalOpen(true);
+  };
 
+  const confirmCancelAppointment = async () => {
+    if (!appToCancel) return;
     try {
       setActionLoading(true);
-      await api.delete(`/appointments/${id}`, { data: { reason } });
+      await api.delete(`/appointments/${appToCancel._id}`, { data: { reason: cancelReason } });
       toast.success('Appointment cancelled. Slot freed up.');
+      setCancelModalOpen(false);
+      setAppToCancel(null);
       fetchAppointments(pagination.currentPage);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to cancel appointment');
@@ -323,9 +333,9 @@ const AppointmentList = () => {
                         {/* Receptionist: Cancel */}
                         {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && app.status !== 'Cancelled' && (
                           <button
-                            onClick={() => handleCancel(app._id)}
+                            onClick={() => openCancelDialog(app)}
                             disabled={actionLoading}
-                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/90 rounded-md text-[11px] font-semibold transition"
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/90 rounded-md text-[11px] font-semibold transition cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -450,6 +460,66 @@ const AppointmentList = () => {
                 className="btn-primary text-[12px] py-1.5 px-4"
               >
                 {actionLoading ? 'Saving...' : 'Save Consultation'}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Radix UI Cancel Confirmation Dialog */}
+      <Dialog.Root open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 animate-in fade-in" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-md w-full bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 z-50">
+            <Dialog.Title className="text-[16px] font-bold text-slate-900 tracking-tight">
+              Cancel Appointment
+            </Dialog.Title>
+            <Dialog.Description className="text-[12px] text-slate-500 mt-1 mb-4 leading-relaxed">
+              Cancelling appointment <b className="text-slate-800">{appToCancel?.appointmentNumber}</b> for patient <b className="text-slate-800">{appToCancel?.patient?.name}</b> will immediately release the time slot back to the clinic pool.
+            </Dialog.Description>
+
+            <div className="space-y-3 text-[12px]">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Cancellation Reason
+                </label>
+                <select
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="elite-input mb-2"
+                >
+                  <option value="Patient rescheduled">Patient rescheduled</option>
+                  <option value="Patient requested cancellation">Patient requested cancellation</option>
+                  <option value="Patient no-show">Patient no-show</option>
+                  <option value="Physician unavailable / emergency">Physician unavailable / emergency</option>
+                  <option value="Other">Other reason</option>
+                </select>
+                {cancelReason === 'Other' && (
+                  <input
+                    type="text"
+                    placeholder="Specify cancellation reason..."
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    className="elite-input"
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end space-x-2.5">
+              <button
+                type="button"
+                onClick={() => setCancelModalOpen(false)}
+                className="btn-secondary text-[12px] py-1.5 px-4 cursor-pointer"
+              >
+                Keep Appointment
+              </button>
+              <button
+                type="button"
+                onClick={confirmCancelAppointment}
+                disabled={actionLoading}
+                className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold rounded-lg transition shadow-xs disabled:opacity-50 cursor-pointer"
+              >
+                {actionLoading ? 'Cancelling...' : 'Confirm Cancellation'}
               </button>
             </div>
           </Dialog.Content>
