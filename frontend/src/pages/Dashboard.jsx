@@ -190,23 +190,24 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* For Receptionist/Admin: Doctor Filter Tabs */}
+      {/* For Receptionist/Admin: Doctor Filter Pills (Flex-wrap with zero horizontal scrollbar) */}
       {user?.role !== 'DOCTOR' && doctors.length > 0 && (
-        <div className="flex items-center space-x-2 mb-3 overflow-x-auto pb-1 text-[12px]">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-2 mb-4 text-[12px]">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1">
             Physician Queue:
           </span>
           {doctors.map((doc) => (
             <button
               key={doc._id}
               onClick={() => setSelectedDoctorId(doc._id)}
-              className={`px-3 py-1 rounded-lg font-medium transition cursor-pointer flex-shrink-0 ${
+              title={doc.department}
+              className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition cursor-pointer ${
                 selectedDoctorId === doc._id
                   ? 'bg-[#2555ff] text-white shadow-2xs'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  : 'bg-white border border-slate-200/90 text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-2xs'
               }`}
             >
-              {doc.name} ({doc.department})
+              {doc.name}
             </button>
           ))}
         </div>
