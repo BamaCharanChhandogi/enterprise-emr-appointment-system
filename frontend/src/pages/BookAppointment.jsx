@@ -2,28 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import {
-  UserPlus,
   Search,
-  Calendar,
-  Clock,
   CheckCircle,
   AlertCircle,
   User,
-  ShieldCheck,
-  Stethoscope
+  Clock
 } from 'lucide-react';
 
 const BookAppointment = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [patientType, setPatientType] = useState('EXISTING'); // 'EXISTING' or 'NEW'
+  const [patientType, setPatientType] = useState('EXISTING');
   const [searchQuery, setSearchQuery] = useState('');
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [searching, setSearching] = useState(false);
 
-  // New Patient Form fields
   const [newPatient, setNewPatient] = useState({
     name: '',
     phone: '',
@@ -33,7 +27,6 @@ const BookAppointment = () => {
     address: ''
   });
 
-  // Doctor & Slot Details
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState(location.state?.doctorId || '');
   const [department, setDepartment] = useState(location.state?.department || '');
@@ -51,7 +44,6 @@ const BookAppointment = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(null);
 
-  // Load doctors
   useEffect(() => {
     api.get('/doctors').then(res => {
       if (res.data?.success) {
@@ -65,7 +57,6 @@ const BookAppointment = () => {
     });
   }, []);
 
-  // Sync department when doctor changes
   useEffect(() => {
     const doc = doctors.find(d => d._id === selectedDoctorId);
     if (doc) {
@@ -73,7 +64,6 @@ const BookAppointment = () => {
     }
   }, [selectedDoctorId, doctors]);
 
-  // Load available slots whenever doctor or date changes
   useEffect(() => {
     if (selectedDoctorId && date) {
       api.get('/slots', {
@@ -87,14 +77,12 @@ const BookAppointment = () => {
     }
   }, [selectedDoctorId, date]);
 
-  // Live Patient Search
   const handleSearchPatient = async (term) => {
     setSearchQuery(term);
     if (!term || term.trim().length === 0) {
       setPatients([]);
       return;
     }
-    setSearching(true);
     try {
       const res = await api.get('/appointments/patients/search', {
         params: { query: term }
@@ -104,8 +92,6 @@ const BookAppointment = () => {
       }
     } catch (e) {
       console.error(e);
-    } finally {
-      setSearching(false);
     }
   };
 
@@ -120,12 +106,12 @@ const BookAppointment = () => {
     }
 
     if (patientType === 'EXISTING' && !selectedPatient) {
-      setError('Please search and select an existing patient');
+      setError('Please select an existing patient record');
       return;
     }
 
     if (patientType === 'NEW' && (!newPatient.name || !newPatient.phone)) {
-      setError('New patient requires name and phone number');
+      setError('New patient requires at least a name and phone number');
       return;
     }
 
@@ -153,7 +139,6 @@ const BookAppointment = () => {
         setSuccess(res.data.data.appointment);
       }
     } catch (err) {
-      // Highlights the concurrency conflict if slot was already taken!
       setError(err.response?.data?.message || err.message || 'Booking failed');
     } finally {
       setLoading(false);
@@ -161,87 +146,83 @@ const BookAppointment = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Book Patient Appointment</h1>
-        <p className="text-sm text-slate-500 mt-1">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+      <div className="pb-4 border-b border-[#e2e8f0] mb-5">
+        <h1 className="text-lg font-bold text-[#0f172a]">Book Patient Appointment</h1>
+        <p className="text-[12px] text-[#64748b] mt-0.5">
           Atomic slot reservation with automated collision prevention
         </p>
       </div>
 
       {success ? (
-        <div className="bg-white rounded-3xl border border-emerald-200 p-8 shadow-sm text-center">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8" />
+        <div className="elite-card p-6 text-center">
+          <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-[5px] flex items-center justify-center mx-auto mb-3">
+            <CheckCircle className="w-5 h-5" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-1">Appointment Confirmed!</h2>
-          <p className="text-sm text-slate-600 mb-6 font-mono font-bold text-blue-600">
-            Reference No: {success.appointmentNumber}
+          <h2 className="text-base font-bold text-[#0f172a]">Appointment Reserved Successfully</h2>
+          <p className="text-[12px] text-[#2555ff] font-mono font-semibold mt-0.5 mb-5">
+            Ref Number: {success.appointmentNumber}
           </p>
 
-          <div className="max-w-md mx-auto bg-slate-50 rounded-2xl p-6 text-left text-sm space-y-3 mb-8 border border-slate-200">
+          <div className="max-w-md mx-auto bg-[#f8fafc] border border-[#e2e8f0] p-4 text-left text-[12px] space-y-2 mb-6">
             <div className="flex justify-between">
-              <span className="text-slate-500">Patient:</span>
-              <span className="font-semibold text-slate-800">{success.patient?.name} ({success.patient?.patientId})</span>
+              <span className="text-[#64748b]">Patient:</span>
+              <span className="font-semibold text-[#0f172a]">{success.patient?.name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Doctor:</span>
-              <span className="font-semibold text-slate-800">{success.doctor?.name}</span>
+              <span className="text-[#64748b]">Physician:</span>
+              <span className="font-semibold text-[#0f172a]">{success.doctor?.name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Department:</span>
-              <span className="font-semibold text-slate-800">{success.department}</span>
+              <span className="text-[#64748b]">Department:</span>
+              <span className="font-semibold text-[#0f172a]">{success.department}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">Date & Slot:</span>
-              <span className="font-semibold text-blue-700">{success.date} at {success.slotStartTime} - {success.slotEndTime}</span>
+              <span className="text-[#64748b]">Schedule:</span>
+              <span className="font-semibold text-[#2555ff]">{success.date} ({success.slotStartTime} - {success.slotEndTime})</span>
             </div>
           </div>
 
-          <div className="flex justify-center space-x-4">
+          <div className="flex justify-center space-x-2">
             <button
               onClick={() => {
                 setSuccess(null);
                 setSelectedSlot(null);
               }}
-              className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition"
+              className="btn-primary"
             >
-              Book Another Appointment
+              Book Another
             </button>
             <button
               onClick={() => navigate('/appointments')}
-              className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition"
+              className="btn-secondary"
             >
-              View Appointment List
+              View Directory
             </button>
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-2xl flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-600" />
-              <div>
-                <p className="font-bold">Booking Unsuccessful</p>
-                <p className="text-xs mt-0.5">{error}</p>
-              </div>
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-[12px] rounded-[5px] flex items-start space-x-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
+              <span>{error}</span>
             </div>
           )}
 
-          {/* Step 1: Patient Selection */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-                <User className="w-5 h-5 text-blue-600" />
-                <span>1. Patient Identification</span>
-              </h2>
+          {/* Section 1: Patient Selection */}
+          <div className="elite-card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[12px] font-bold text-[#0f172a] uppercase tracking-wider">
+                1. Patient Information
+              </span>
 
-              <div className="inline-flex p-1 bg-slate-100 rounded-xl">
+              <div className="inline-flex border border-[#e2e8f0] p-0.5 rounded-[5px] bg-[#f8fafc]">
                 <button
                   type="button"
                   onClick={() => setPatientType('EXISTING')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    patientType === 'EXISTING' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'
+                  className={`px-2.5 py-1 text-[11px] font-semibold rounded-[3px] transition ${
+                    patientType === 'EXISTING' ? 'bg-[#2555ff] text-white' : 'text-[#64748b]'
                   }`}
                 >
                   Existing Patient
@@ -249,8 +230,8 @@ const BookAppointment = () => {
                 <button
                   type="button"
                   onClick={() => setPatientType('NEW')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    patientType === 'NEW' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600'
+                  className={`px-2.5 py-1 text-[11px] font-semibold rounded-[3px] transition ${
+                    patientType === 'NEW' ? 'bg-[#2555ff] text-white' : 'text-[#64748b]'
                   }`}
                 >
                   New Patient
@@ -260,37 +241,36 @@ const BookAppointment = () => {
 
             {patientType === 'EXISTING' ? (
               <div>
-                <div className="relative mb-3">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <div className="relative mb-2">
+                  <Search className="w-3.5 h-3.5 text-[#94a3b8] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => handleSearchPatient(e.target.value)}
-                    placeholder="Search by Patient ID (PAT-...), Phone Number, or Name..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Search by name, phone or MRN..."
+                    className="w-full pl-8 elite-input text-[12px]"
                   />
                 </div>
 
                 {selectedPatient ? (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+                  <div className="p-3 bg-[#2555ff]/5 border border-[#2555ff]/20 rounded-[5px] flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold text-blue-700">SELECTED PATIENT</p>
-                      <h4 className="text-sm font-bold text-slate-900">{selectedPatient.name}</h4>
-                      <p className="text-xs text-slate-500 font-mono">
+                      <div className="text-[12px] font-bold text-[#0f172a]">{selectedPatient.name}</div>
+                      <div className="text-[11px] text-[#64748b] font-mono">
                         ID: {selectedPatient.patientId} • Phone: {selectedPatient.phone}
-                      </p>
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSelectedPatient(null)}
-                      className="text-xs text-rose-600 font-semibold hover:underline"
+                      className="text-[11px] text-rose-600 font-semibold hover:underline"
                     >
-                      Change
+                      Deselect
                     </button>
                   </div>
                 ) : (
                   patients.length > 0 && (
-                    <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                    <div className="border border-[#e2e8f0] rounded-[5px] divide-y divide-[#e2e8f0] max-h-36 overflow-y-auto">
                       {patients.map(p => (
                         <div
                           key={p._id}
@@ -299,13 +279,10 @@ const BookAppointment = () => {
                             setPatients([]);
                             setSearchQuery('');
                           }}
-                          className="p-3 hover:bg-slate-50 cursor-pointer flex justify-between items-center text-sm"
+                          className="p-2 hover:bg-[#f8fafc] cursor-pointer flex justify-between items-center text-[12px]"
                         >
-                          <div>
-                            <span className="font-bold text-slate-800">{p.name}</span>
-                            <span className="text-xs text-slate-500 ml-2 font-mono">({p.patientId})</span>
-                          </div>
-                          <span className="text-xs text-slate-500 font-mono">{p.phone}</span>
+                          <span className="font-semibold text-[#0f172a]">{p.name} ({p.patientId})</span>
+                          <span className="text-[#64748b] font-mono text-[11px]">{p.phone}</span>
                         </div>
                       ))}
                     </div>
@@ -313,69 +290,46 @@ const BookAppointment = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 text-[12px]">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Full Name *</label>
+                  <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Full Name *</label>
                   <input
                     type="text"
                     required
                     value={newPatient.name}
                     onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
-                    placeholder="e.g. Alex Henderson"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                    placeholder="Jane Doe"
+                    className="w-full elite-input"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Phone Number *</label>
+                  <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Phone *</label>
                   <input
                     type="tel"
                     required
                     value={newPatient.phone}
                     onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                    placeholder="e.g. 9876543210"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                    placeholder="9876543210"
+                    className="w-full elite-input"
                   />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Age</label>
-                  <input
-                    type="number"
-                    value={newPatient.age}
-                    onChange={(e) => setNewPatient({ ...newPatient, age: e.target.value })}
-                    placeholder="e.g. 35"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Gender</label>
-                  <select
-                    value={newPatient.gender}
-                    onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Step 2: Doctor and Slot Selection */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2 mb-4">
-              <Stethoscope className="w-5 h-5 text-indigo-600" />
-              <span>2. Physician & Appointment Time</span>
-            </h2>
+          {/* Section 2: Physician & Time */}
+          <div className="elite-card p-4">
+            <span className="text-[12px] font-bold text-[#0f172a] uppercase tracking-wider block mb-3">
+              2. Physician & Slot
+            </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-3 mb-3 text-[12px]">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Doctor</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Physician</label>
                 <select
                   value={selectedDoctorId}
                   onChange={(e) => setSelectedDoctorId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium"
+                  className="w-full elite-input"
                 >
                   {doctors.map(d => (
                     <option key={d._id} value={d._id}>{d.name} ({d.department})</option>
@@ -384,25 +338,25 @@ const BookAppointment = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Date</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Date</label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium"
+                  className="w-full elite-input"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-2">
-                Available Slots for {date}
+              <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1.5">
+                Available Time Slots
               </label>
 
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-1">
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 max-h-36 overflow-y-auto">
                 {availableSlots.filter(s => s.isAvailable).length === 0 ? (
-                  <div className="col-span-full py-4 text-center text-xs text-slate-400">
-                    No available slots on this date. Please pick another date or doctor.
+                  <div className="col-span-full py-3 text-center text-[11px] text-[#64748b]">
+                    No open slots on this date.
                   </div>
                 ) : (
                   availableSlots.filter(s => s.isAvailable).map((slot, i) => {
@@ -412,10 +366,10 @@ const BookAppointment = () => {
                         key={i}
                         type="button"
                         onClick={() => setSelectedSlot(slot)}
-                        className={`p-2.5 rounded-xl border text-xs font-mono font-bold transition ${
+                        className={`py-1.5 px-2 rounded-[5px] border text-[11px] font-mono font-bold transition ${
                           isSelected
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20'
-                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
+                            ? 'bg-[#2555ff] text-white border-[#2555ff]'
+                            : 'bg-white text-[#0f172a] hover:bg-[#f1f5f9] border-[#e2e8f0]'
                         }`}
                       >
                         {slot.startTime}
@@ -427,33 +381,32 @@ const BookAppointment = () => {
             </div>
           </div>
 
-          {/* Step 3: Clinical Notes */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-            <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2 mb-4">
-              <Clock className="w-5 h-5 text-emerald-600" />
-              <span>3. Visit Details</span>
-            </h2>
+          {/* Section 3: Details */}
+          <div className="elite-card p-4">
+            <span className="text-[12px] font-bold text-[#0f172a] uppercase tracking-wider block mb-3">
+              3. Consultation Details
+            </span>
 
-            <div className="space-y-4">
+            <div className="space-y-3 text-[12px]">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Purpose of Visit</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Purpose</label>
                 <input
                   type="text"
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
-                  placeholder="e.g. Routine Checkup, Follow-up, Fever"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  placeholder="Routine Checkup, Follow-up, Fever"
+                  className="w-full elite-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">Reception / Intake Notes</label>
+                <label className="block text-[11px] font-semibold text-[#64748b] uppercase mb-1">Intake Notes</label>
                 <textarea
                   rows="2"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Additional medical history, insurance info or allergies..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+                  placeholder="Allergies, previous clinical summary..."
+                  className="w-full elite-input"
                 ></textarea>
               </div>
             </div>
@@ -462,9 +415,9 @@ const BookAppointment = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/25 transition disabled:opacity-50"
+            className="w-full py-2.5 bg-[#2555ff] hover:bg-[#1b44db] text-white text-[13px] font-semibold rounded-[5px] transition disabled:opacity-50"
           >
-            {loading ? 'Securing Slot via Atomic Lock...' : 'Confirm Appointment Reservation'}
+            {loading ? 'Reserving slot...' : 'Confirm Appointment'}
           </button>
         </form>
       )}
