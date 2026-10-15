@@ -34,7 +34,18 @@ const logout = async (req, res, next) => {
 
 const getMe = async (req, res, next) => {
   try {
-    return successResponse(res, 200, 'Current user profile', { user: req.user });
+    const u = req.user;
+    return successResponse(res, 200, 'Current user profile', {
+      user: {
+        id: u._id,
+        _id: u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        department: u.department,
+        phone: u.phone
+      }
+    });
   } catch (error) {
     next(error);
   }

@@ -211,83 +211,64 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
   };
 
   return (
-    <div className="elite-card p-5 mb-6 overflow-hidden border-slate-200/90 shadow-sm">
-      {/* Header Bar */}
+    <div className="bg-white border border-slate-200/90 rounded-[28px] p-6 mb-6 shadow-xs">
+      {/* Header Bar (Clean, Zero Fluff Icons) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#2555ff]/10 text-[#2555ff] flex items-center justify-center font-bold">
-            <Stethoscope className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h2 className="text-[15px] font-bold text-slate-900 tracking-tight">
-                Live OPD Consultation & Lobby Queue
-              </h2>
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 font-mono">
-              DATE: {today} • ATTENDING: {doctorName || user.name}
-            </p>
-          </div>
+        <div>
+          <h2 className="text-base font-bold text-slate-900 tracking-tight">
+            Live OPD Queue & Triage
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            DATE: {today} • ATTENDING: {doctorName || user?.name}
+          </p>
         </div>
 
-        {/* Live Counters */}
-        <div className="flex items-center space-x-2 text-[11px]">
-          <span className="bg-amber-50 text-amber-800 border border-amber-200/90 px-2.5 py-1 rounded-md font-semibold flex items-center space-x-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-            <span>{waitingQueue.length} In Lobby</span>
+        {/* Status Counters */}
+        <div className="flex items-center space-x-2 text-xs">
+          <span className="bg-amber-50 text-amber-800 border border-amber-200/90 px-3 py-1 rounded-full font-semibold">
+            {waitingQueue.length} Waiting in Lobby
           </span>
-          <span className="bg-blue-50 text-[#2555ff] border border-blue-200/80 px-2.5 py-1 rounded-md font-semibold">
+          <span className="bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1 rounded-full font-semibold">
             {completedList.length} Consulted
           </span>
           <button
             onClick={fetchTodayQueue}
             disabled={loading}
             title="Refresh Queue"
-            className="p-1 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100 transition cursor-pointer"
+            className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* Hero "Call Next Patient" Banner */}
-      <div className="my-4">
+      {/* Hero "Call Next Patient" Banner (Clean Medical Minimalist, No Neon Gradients) */}
+      <div className="my-5">
         {nextInLine ? (
-          <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-slate-50 border border-blue-200/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center space-x-3.5">
-              <div className="w-10 h-10 rounded-xl bg-[#2555ff] text-white flex items-center justify-center shadow-xs">
-                <Volume2 className="w-5 h-5 animate-pulse" />
+          <div className="bg-slate-50/80 border border-slate-200/90 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-[#1e40af]">
+                Next in Line • Waiting Outside
               </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#2555ff]">
-                  Next In Line • Waiting Outside
-                </div>
-                <div className="text-[15px] font-extrabold text-slate-900 leading-tight">
-                  {nextInLine.patient?.name}
-                </div>
-                <div className="text-[11px] text-slate-500 font-mono">
-                  Token: <b>{nextInLine.appointmentNumber}</b> • Slot: {nextInLine.slotStartTime} - {nextInLine.slotEndTime}
-                </div>
+              <div className="text-xl font-bold text-slate-900 mt-0.5">
+                {nextInLine.patient?.name}
+              </div>
+              <div className="text-xs text-slate-500 mt-0.5">
+                Token: <b>{nextInLine.appointmentNumber}</b> • Slot: {nextInLine.slotStartTime} - {nextInLine.slotEndTime}
               </div>
             </div>
 
             <button
               onClick={() => handleCallPatient(nextInLine)}
               disabled={callingId === nextInLine._id}
-              className="btn-primary py-2.5 px-5 text-[13px] flex items-center justify-center space-x-2 shadow-sm font-bold"
+              className="btn-primary rounded-full px-6 py-2.5 text-xs font-bold shadow-xs cursor-pointer"
             >
-              <Bell className="w-4 h-4 mr-1 text-white" />
               <span>{callingId === nextInLine._id ? 'Announcing...' : 'Call Next Patient into Cabin'}</span>
             </button>
           </div>
         ) : (
-          <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 text-center text-slate-500 text-[12px] flex items-center justify-center space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Lobby Queue Clear — No patients currently waiting outside.</span>
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-center text-slate-500 text-xs">
+            Lobby Queue Clear — All arrived patients have been consulted.
           </div>
         )}
       </div>
@@ -320,110 +301,105 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
           </div>
 
           {/* Patient Quick Profile & Chief Complaint */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-50/80 p-3 rounded-lg border border-slate-200/80 text-[11px] mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 text-xs mb-5">
             <div>
-              <span className="text-slate-400 font-bold block uppercase text-[10px]">MRN Reference</span>
-              <span className="font-mono font-semibold text-slate-800">{activePatient.patient?.patientId || 'MRN-PENDING'}</span>
+              <span className="text-slate-400 font-semibold block uppercase text-[10px]">MRN Reference</span>
+              <span className="font-semibold text-slate-800">{activePatient.patient?.patientId || 'MRN-PENDING'}</span>
             </div>
             <div>
-              <span className="text-slate-400 font-bold block uppercase text-[10px]">Contact</span>
-              <span className="font-mono text-slate-800">{activePatient.patient?.phone || 'N/A'}</span>
+              <span className="text-slate-400 font-semibold block uppercase text-[10px]">Contact</span>
+              <span className="text-slate-800">{activePatient.patient?.phone || 'N/A'}</span>
             </div>
             <div>
-              <span className="text-slate-400 font-bold block uppercase text-[10px]">Gender / Age</span>
+              <span className="text-slate-400 font-semibold block uppercase text-[10px]">Gender / Age</span>
               <span className="text-slate-800">{activePatient.patient?.gender || 'N/A'} • {activePatient.patient?.age || 'N/A'} yrs</span>
             </div>
             <div>
-              <span className="text-slate-400 font-bold block uppercase text-[10px]">Chief Complaint</span>
-              <span className="font-medium text-[#0f172a]">{activePatient.purpose || 'General Consultation'}</span>
+              <span className="text-slate-400 font-semibold block uppercase text-[10px]">Chief Complaint</span>
+              <span className="font-semibold text-slate-900">{activePatient.purpose || 'General Consultation'}</span>
             </div>
           </div>
 
           {/* Quick Vitals Recorder */}
-          <div className="mb-4">
-            <div className="flex items-center space-x-1.5 mb-2">
-              <Activity className="w-3.5 h-3.5 text-[#2555ff]" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                Clinical Vitals & Triage Snapshot
-              </span>
-            </div>
+          <div className="mb-5">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2.5">
+              Clinical Vitals & Triage
+            </span>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
-                <span className="text-[10px] text-slate-500 font-semibold uppercase block">Blood Pressure</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white p-3 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-semibold uppercase block">Blood Pressure</span>
                 <input
                   type="text"
                   value={vitals.bp}
                   onChange={(e) => setVitals({ ...vitals, bp: e.target.value })}
                   placeholder="120/80"
-                  className="font-mono text-[12px] font-bold text-slate-900 bg-transparent w-full focus:outline-none"
+                  className="text-xs font-bold text-slate-900 bg-transparent w-full focus:outline-none mt-0.5"
                 />
               </div>
 
-              <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
-                <span className="text-[10px] text-slate-500 font-semibold uppercase block">Heart / Pulse</span>
+              <div className="bg-white p-3 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-semibold uppercase block">Heart Rate</span>
                 <input
                   type="text"
                   value={vitals.pulse}
                   onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
                   placeholder="74 bpm"
-                  className="font-mono text-[12px] font-bold text-slate-900 bg-transparent w-full focus:outline-none"
+                  className="text-xs font-bold text-slate-900 bg-transparent w-full focus:outline-none mt-0.5"
                 />
               </div>
 
-              <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
-                <span className="text-[10px] text-slate-500 font-semibold uppercase block">Temperature</span>
+              <div className="bg-white p-3 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-semibold uppercase block">Temperature</span>
                 <input
                   type="text"
                   value={vitals.temp}
                   onChange={(e) => setVitals({ ...vitals, temp: e.target.value })}
                   placeholder="98.4°F"
-                  className="font-mono text-[12px] font-bold text-slate-900 bg-transparent w-full focus:outline-none"
+                  className="text-xs font-bold text-slate-900 bg-transparent w-full focus:outline-none mt-0.5"
                 />
               </div>
 
-              <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
-                <span className="text-[10px] text-slate-500 font-semibold uppercase block">Oxygen SpO2</span>
+              <div className="bg-white p-3 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-semibold uppercase block">Oxygen SpO2</span>
                 <input
                   type="text"
                   value={vitals.spo2}
                   onChange={(e) => setVitals({ ...vitals, spo2: e.target.value })}
                   placeholder="99%"
-                  className="font-mono text-[12px] font-bold text-slate-900 bg-transparent w-full focus:outline-none"
+                  className="text-xs font-bold text-slate-900 bg-transparent w-full focus:outline-none mt-0.5"
                 />
               </div>
             </div>
           </div>
 
           {/* Quick-Fill Clinical Prescriptions & Notes */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-[#2555ff] flex items-center space-x-1">
-                <FileText className="w-3.5 h-3.5 mr-1" />
-                <span>Physician Assessment, Diagnosis & Prescription (Rx)</span>
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                Physician Assessment & Prescription (Rx)
               </label>
 
               {/* Quick Template Chips */}
-              <div className="hidden sm:flex items-center space-x-1.5 text-[10px]">
-                <span className="text-slate-400 font-medium">Quick Rx:</span>
+              <div className="hidden sm:flex items-center space-x-1.5 text-xs">
                 <button
                   type="button"
                   onClick={() => applyQuickRx('Tab Paracetamol 650mg TDS x 3 days')}
-                  className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition cursor-pointer"
+                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition cursor-pointer text-[11px]"
                 >
-                  + Paracetamol 650mg
+                  + Paracetamol
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickRx('Tab Pantoprazole 40mg OD (empty stomach) x 7 days')}
-                  className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition cursor-pointer"
+                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition cursor-pointer text-[11px]"
                 >
-                  + Pantoprazole 40mg
+                  + Pantoprazole
                 </button>
                 <button
                   type="button"
                   onClick={() => applyQuickRx('CBC & Lipid Profile blood investigations advised')}
-                  className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition cursor-pointer"
+                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition cursor-pointer text-[11px]"
                 >
                   + Lab Tests
                 </button>
@@ -435,16 +411,16 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
               value={consultNotes}
               onChange={(e) => setConsultNotes(e.target.value)}
               placeholder="Record clinical assessment findings, diagnostic impressions, dosages, and review advice..."
-              className="elite-input border-[#2555ff]/40 focus:border-[#2555ff]"
+              className="elite-input rounded-2xl"
             ></textarea>
           </div>
 
           {/* Complete Consultation Action */}
-          <div className="flex justify-end space-x-2.5 pt-2 border-t border-slate-100">
+          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
             <button
               type="button"
               onClick={() => setActivePatient(null)}
-              className="btn-secondary text-[12px] py-1.5 px-4 cursor-pointer"
+              className="btn-secondary rounded-full py-2 px-5 text-xs cursor-pointer"
             >
               Cancel
             </button>
@@ -452,9 +428,8 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
               type="button"
               onClick={handleCompleteConsultation}
               disabled={actionLoading}
-              className="btn-primary text-[12px] py-1.5 px-5 flex items-center space-x-1.5 shadow-sm font-semibold cursor-pointer"
+              className="btn-primary rounded-full py-2 px-6 text-xs font-semibold cursor-pointer"
             >
-              <CheckCircle2 className="w-4 h-4 mr-1 text-emerald-400" />
               <span>{actionLoading ? 'Saving...' : 'Complete Consultation & Release'}</span>
             </button>
           </div>
@@ -462,40 +437,37 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
       )}
 
       {/* Two-Column OPD Queue Matrix: Arrived Queue + Upcoming Scheduled */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Waiting Lobby Column */}
-        <div className="border border-slate-200/80 rounded-xl p-4 bg-[#fcfdfe]">
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-3">
-            <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-              <h3 className="text-[12px] font-bold uppercase tracking-wider text-slate-800">
-                Waiting In Lobby ({waitingQueue.length})
-              </h3>
-            </div>
-            <span className="text-[10px] text-slate-400 font-medium">Checked-in Patients</span>
+        <div className="border border-slate-200/90 rounded-[22px] p-5 bg-[#fbfcfe]">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+              Waiting in Lobby ({waitingQueue.length})
+            </h3>
+            <span className="text-[11px] text-slate-400">Checked-in Patients</span>
           </div>
 
           {waitingQueue.length === 0 ? (
-            <div className="py-8 text-center text-slate-400 text-[11px]">
+            <div className="py-8 text-center text-slate-400 text-xs">
               No patients currently waiting in the lobby.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {waitingQueue.map((app, index) => (
                 <div
                   key={app._id}
-                  className="p-3 bg-white border border-slate-200/90 rounded-lg flex items-center justify-between hover:border-slate-300 transition shadow-2xs"
+                  className="p-3.5 bg-white border border-slate-200/90 rounded-2xl flex items-center justify-between hover:border-slate-300 transition shadow-2xs"
                 >
                   <div className="flex items-center space-x-3">
-                    <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-mono text-[11px] font-bold flex items-center justify-center">
-                      #{index + 1}
+                    <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center">
+                      {index + 1}
                     </span>
                     <div>
-                      <div className="font-bold text-[13px] text-slate-900 leading-tight">
+                      <div className="font-bold text-sm text-slate-900 leading-tight">
                         {app.patient?.name}
                       </div>
-                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                        Token: <b>{app.appointmentNumber}</b> • Slot: {app.slotStartTime} - {app.slotEndTime}
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        Token: {app.appointmentNumber} • Slot: {app.slotStartTime} - {app.slotEndTime}
                       </div>
                     </div>
                   </div>
@@ -503,11 +475,10 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
                   <button
                     onClick={() => handleCallPatient(app)}
                     disabled={callingId === app._id}
-                    title="Call this patient into cabin"
-                    className="px-3 py-1 bg-blue-50 hover:bg-[#2555ff] text-[#2555ff] hover:text-white border border-blue-200/90 rounded-md text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer"
+                    title="Call patient into cabin"
+                    className="btn-primary rounded-full px-4 py-1.5 text-xs font-semibold"
                   >
-                    <Bell className="w-3 h-3 mr-0.5" />
-                    <span>Call</span>
+                    Call
                   </button>
                 </div>
               ))}
@@ -515,54 +486,51 @@ const OpdQueuePanel = ({ doctorId, doctorName, department }) => {
           )}
         </div>
 
-        {/* Upcoming Scheduled Arrivals (Receptionist Intake View) */}
-        <div className="border border-slate-200/80 rounded-xl p-4 bg-[#fcfdfe]">
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-3">
-            <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              <h3 className="text-[12px] font-bold uppercase tracking-wider text-slate-800">
-                Today's Upcoming Arrivals ({scheduledQueue.length})
-              </h3>
-            </div>
-            <span className="text-[10px] text-slate-400 font-medium">Pending Check-in</span>
+        {/* Upcoming Scheduled Arrivals */}
+        <div className="border border-slate-200/90 rounded-[22px] p-5 bg-[#fbfcfe]">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+              Today's Upcoming Arrivals ({scheduledQueue.length})
+            </h3>
+            <span className="text-[11px] text-slate-400">Scheduled Intake</span>
           </div>
 
           {scheduledQueue.length === 0 ? (
-            <div className="py-8 text-center text-slate-400 text-[11px]">
+            <div className="py-8 text-center text-slate-400 text-xs">
               All scheduled appointments for today have arrived or been handled.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {scheduledQueue.slice(0, 5).map((app) => (
                 <div
                   key={app._id}
-                  className="p-3 bg-white border border-slate-200/80 rounded-lg flex items-center justify-between hover:border-slate-300 transition shadow-2xs"
+                  className="p-3.5 bg-white border border-slate-200/80 rounded-2xl flex items-center justify-between hover:border-slate-300 transition shadow-2xs"
                 >
                   <div>
-                    <div className="font-semibold text-[12px] text-slate-900">
+                    <div className="font-semibold text-sm text-slate-900">
                       {app.patient?.name}
                     </div>
-                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                    <div className="text-xs text-slate-500 mt-0.5">
                       {app.appointmentNumber} • {app.slotStartTime} - {app.slotEndTime}
                     </div>
                   </div>
 
                   {/* 1-Click Intake Check-in button */}
-                  {(user.role === 'SUPER_ADMIN' || user.role === 'RECEPTIONIST') && (
+                  {(user?.role === 'SUPER_ADMIN' || user?.role === 'RECEPTIONIST') && (
                     <button
                       onClick={() => handleMarkArrived(app._id)}
                       disabled={actionLoading}
                       title="Patient arrived at front desk"
-                      className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/90 rounded-md text-[11px] font-semibold transition cursor-pointer"
+                      className="btn-secondary rounded-full px-4 py-1.5 text-xs font-semibold"
                     >
-                      Check In (Arrived)
+                      Check In
                     </button>
                   )}
                 </div>
               ))}
 
               {scheduledQueue.length > 5 && (
-                <div className="text-center pt-1 text-[11px] text-slate-400">
+                <div className="text-center pt-1 text-xs text-slate-400">
                   + {scheduledQueue.length - 5} more appointments scheduled today
                 </div>
               )}
