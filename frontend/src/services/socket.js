@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://enterprise-emr-appointment-system-90u6.onrender.com';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://enterprise-emr-appointment-system-c108.onrender.com';
 
 let socket = null;
 

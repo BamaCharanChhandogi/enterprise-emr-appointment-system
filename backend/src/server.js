@@ -33,7 +33,7 @@ const startServer = async () => {
 
     // 6. Keep-Alive Self-Pinger (pings health endpoint every 10 minutes to prevent Render cold starts)
     const https = require('https');
-    const targetUrl = process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL || 'https://enterprise-emr-appointment-system-90u6.onrender.com';
+    const targetUrl = process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL || 'https://enterprise-emr-appointment-system-c108.onrender.com';
     const pingEndpoint = `${targetUrl.replace(/\/$/, '')}/api/health`;
     const PING_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
