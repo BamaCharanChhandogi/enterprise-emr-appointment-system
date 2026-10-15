@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { getSocket } from '../services/socket';
 
 const Scheduler = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  const isDoctor = user?.role === 'DOCTOR';
+
   const [doctors, setDoctors] = useState([]);
-  const [selectedDoctorId, setSelectedDoctorId] = useState('');
+  const [selectedDoctorId, setSelectedDoctorId] = useState(isDoctor ? user?.id : '');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0];
@@ -16,6 +21,13 @@ const Scheduler = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // If the logged-in user is a Doctor, strictly lock the scheduler to their own profile
+    if (isDoctor) {
+      setSelectedDoctorId(user?.id);
+      return;
+    }
+
+    // For Super Admin & Receptionist, fetch the list of all hospital physicians
     api.get('/doctors')
       .then(res => {
         if (res.data?.success) {
@@ -27,17 +39,18 @@ const Scheduler = () => {
         }
       })
       .catch(err => console.error(err));
-  }, []);
+  }, [isDoctor, user]);
 
   const fetchSlots = async () => {
-    if (!selectedDoctorId || !selectedDate) return;
+    const doctorIdToFetch = isDoctor ? user?.id : selectedDoctorId;
+    if (!doctorIdToFetch || !selectedDate) return;
     setLoading(true);
     setError('');
 
     try {
       const res = await api.get('/slots', {
         params: {
-          doctorId: selectedDoctorId,
+          doctorId: doctorIdToFetch,
           date: selectedDate
         }
       });
@@ -53,24 +66,25 @@ const Scheduler = () => {
 
   useEffect(() => {
     fetchSlots();
-  }, [selectedDoctorId, selectedDate]);
+  }, [selectedDoctorId, selectedDate, isDoctor, user]);
 
   useEffect(() => {
-    if (!selectedDoctorId || !selectedDate) return;
+    const doctorIdToListen = isDoctor ? user?.id : selectedDoctorId;
+    if (!doctorIdToListen || !selectedDate) return;
 
     const socket = getSocket();
-    socket.emit('join_schedule_room', { doctorId: selectedDoctorId, date: selectedDate });
+    socket.emit('join_schedule_room', { doctorId: doctorIdToListen, date: selectedDate });
 
     const handleSlotChanged = () => fetchSlots();
     socket.on('slot_status_changed', handleSlotChanged);
     socket.on('appointment_event', handleSlotChanged);
 
     return () => {
-      socket.emit('leave_schedule_room', { doctorId: selectedDoctorId, date: selectedDate });
+      socket.emit('leave_schedule_room', { doctorId: doctorIdToListen, date: selectedDate });
       socket.off('slot_status_changed', handleSlotChanged);
       socket.off('appointment_event', handleSlotChanged);
     };
-  }, [selectedDoctorId, selectedDate]);
+  }, [selectedDoctorId, selectedDate, isDoctor, user]);
 
   const departments = Array.from(new Set(doctors.map(d => d.department).filter(Boolean)));
   const filteredDoctors = selectedDepartment
@@ -78,7 +92,10 @@ const Scheduler = () => {
     : doctors;
 
   const handleBookSlotClick = (slot) => {
+    // Doctors cannot book slots directly (that is receptionist/admin's role)
+    if (isDoctor) return;
     if (!slot.isAvailable) return;
+
     const doc = doctors.find(d => d._id === selectedDoctorId);
     navigate('/book', {
       state: {
@@ -98,8 +115,14 @@ const Scheduler = () => {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e2e8f0] mb-5">
         <div>
-          <h1 className="text-[17px] font-bold text-[#0f172a] tracking-tight">Appointment Scheduler</h1>
-          <p className="text-[12px] text-[#64748b] mt-0.5">Filter physician schedules and reserve open consultation slots</p>
+          <h1 className="text-[17px] font-bold text-[#0f172a] tracking-tight">
+            {isDoctor ? 'My Consultation Schedule & Shifts' : 'Hospital Appointment Scheduler'}
+          </h1>
+          <p className="text-[12px] text-[#64748b] mt-0.5">
+            {isDoctor
+              ? `Real-time patient schedule and consultation slots for ${user?.name}`
+              : 'Filter physician schedules and reserve open consultation slots'}
+          </p>
         </div>
         <div className="text-[12px] text-[#64748b] font-medium flex items-center space-x-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -107,64 +130,97 @@ const Scheduler = () => {
         </div>
       </div>
 
-      {/* Filter Control Bar */}
-      <div className="elite-card p-4 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#64748b] mb-1">
-            Department
-          </label>
-          <select
-            value={selectedDepartment}
-            onChange={(e) => {
-              setSelectedDepartment(e.target.value);
-              const matchedDocs = e.target.value
-                ? doctors.filter(d => d.department === e.target.value)
-                : doctors;
-              if (matchedDocs.length > 0) {
-                setSelectedDoctorId(matchedDocs[0]._id);
-              }
-            }}
-            className="w-full elite-input"
-          >
-            <option value="">All Departments</option>
-            {departments.map(dep => (
-              <option key={dep} value={dep}>{dep}</option>
-            ))}
-          </select>
-        </div>
+      {/* Filter Control Bar - Hidden dropdowns for Doctor to strictly protect RBAC */}
+      <div className="elite-card p-4 mb-4">
+        {isDoctor ? (
+          // Doctor View: strictly locked to their own clinic and date picker
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748b] block mb-1">
+                Attending Physician
+              </span>
+              <div className="text-[14px] font-bold text-[#0f172a]">
+                {user?.name}
+              </div>
+              <div className="text-[12px] text-[#2555ff] font-medium">
+                {user?.department || 'Internal Medicine'}
+              </div>
+            </div>
 
-        <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#64748b] mb-1">
-            Physician
-          </label>
-          <select
-            value={selectedDoctorId}
-            onChange={(e) => setSelectedDoctorId(e.target.value)}
-            className="w-full elite-input"
-          >
-            {filteredDoctors.map(doc => (
-              <option key={doc._id} value={doc._id}>
-                {doc.name} ({doc.department})
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="w-full sm:w-64">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#64748b] mb-1">
+                Select Date
+              </label>
+              <input
+                type="date"
+                value={selectedDate}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full elite-input"
+              />
+            </div>
+          </div>
+        ) : (
+          // Admin & Receptionist View: full hospital filters across all doctors
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#64748b] mb-1">
+                Department
+              </label>
+              <select
+                value={selectedDepartment}
+                onChange={(e) => {
+                  setSelectedDepartment(e.target.value);
+                  const matchedDocs = e.target.value
+                    ? doctors.filter(d => d.department === e.target.value)
+                    : doctors;
+                  if (matchedDocs.length > 0) {
+                    setSelectedDoctorId(matchedDocs[0]._id);
+                  }
+                }}
+                className="w-full elite-input"
+              >
+                <option value="">All Departments</option>
+                {departments.map(dep => (
+                  <option key={dep} value={dep}>{dep}</option>
+                ))}
+              </select>
+            </div>
 
-        <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#64748b] mb-1">
-            Date
-          </label>
-          <input
-            type="date"
-            value={selectedDate}
-            min={new Date().toISOString().split('T')[0]}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full elite-input"
-          />
-        </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#64748b] mb-1">
+                Physician
+              </label>
+              <select
+                value={selectedDoctorId}
+                onChange={(e) => setSelectedDoctorId(e.target.value)}
+                className="w-full elite-input"
+              >
+                {filteredDoctors.map(doc => (
+                  <option key={doc._id} value={doc._id}>
+                    {doc.name} ({doc.department})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#64748b] mb-1">
+                Date
+              </label>
+              <input
+                type="date"
+                value={selectedDate}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full elite-input"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Status Bar */}
+      {/* Status Summary Bar */}
       {slotData && (
         <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-[#e2e8f0] px-4 py-2.5 rounded-[5px] mb-4 text-[12px]">
           <div className="flex items-center space-x-2 text-[#0f172a]">
@@ -204,12 +260,14 @@ const Scheduler = () => {
           <div className="py-16 text-center text-[#64748b] text-[12px]">Past dates are not available for booking.</div>
         ) : slotData?.slots?.length === 0 ? (
           <div className="py-16 text-center text-[#64748b] text-[12px]">
-            {slotData?.message || 'Physician has no active shift on this date.'}
+            {slotData?.message || 'No active shifts configured on this date.'}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
             {slotData?.slots.map((slot, index) => {
-              let style = "border-[#2555ff]/30 bg-[#2555ff]/5 text-[#2555ff] hover:bg-[#2555ff] hover:text-white cursor-pointer";
+              let style = isDoctor
+                ? "border-[#2555ff]/30 bg-[#2555ff]/5 text-[#2555ff] cursor-default"
+                : "border-[#2555ff]/30 bg-[#2555ff]/5 text-[#2555ff] hover:bg-[#2555ff] hover:text-white cursor-pointer";
               let badge = "Open";
 
               if (slot.isBooked) {
@@ -221,16 +279,14 @@ const Scheduler = () => {
               }
 
               return (
-                <button
+                <div
                   key={index}
-                  type="button"
                   onClick={() => handleBookSlotClick(slot)}
-                  disabled={!slot.isAvailable}
                   className={`p-2.5 rounded-[5px] border text-left transition ${style}`}
                 >
                   <div className="text-[13px] font-mono font-bold leading-tight">{slot.startTime}</div>
                   <div className="text-[10px] uppercase font-semibold opacity-75 mt-0.5">{badge}</div>
-                </button>
+                </div>
               );
             })}
           </div>
