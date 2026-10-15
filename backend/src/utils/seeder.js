@@ -6,9 +6,15 @@ const AuditLog = require('../models/AuditLog');
 
 const seedInitialData = async () => {
   try {
-    console.log('🌱 Checking / Seeding comprehensive EMR enterprise clinical dataset...');
+    const existingUsersCount = await User.countDocuments();
+    if (existingUsersCount > 0 && process.env.FORCE_SEED !== 'true') {
+      console.log(`ℹ️ Database already contains ${existingUsersCount} active staff accounts. Preserving all hospital staff and appointments.`);
+      return;
+    }
 
-    // Clean existing collections for a pure, deterministic setup
+    console.log('🌱 Database is empty. Seeding comprehensive EMR enterprise clinical dataset...');
+
+    // Clean existing collections only on fresh setup or FORCE_SEED
     await Promise.all([
       User.deleteMany({}),
       DoctorSchedule.deleteMany({}),
